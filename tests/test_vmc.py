@@ -8,11 +8,10 @@ from os import path
 sys.path.insert(0,'../')
 
 from tba.hgen import SpinSpaceConfig,sx,sy,sz
-from rbm import *
-from sstate import *
+from vmc import *
 from toymodel import *
 
-def test_model():
+def test_measure():
     J=1.
     scfg=SpinSpaceConfig([4,2])
     #construct true H
@@ -24,8 +23,10 @@ def test_model():
     res=h.rmatmul(config)
     vec=res.tovec(scfg)
     v0=zeros(scfg.hndim); v0[scfg.config2ind(config)]=1
-    v_true=v0.dot(H)
+    O_true=v0.conj().dot(H).dot(v0)
     assert_allclose(vec,v_true)
 
+    vmc.measure(state,h)
+
 if __name__=='__main__':
-    test_model()
+    test_measure()
