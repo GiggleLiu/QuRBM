@@ -6,7 +6,7 @@ from numpy import *
 from abc import ABCMeta, abstractmethod
 import pdb
 
-from linop import c_sandwich
+from linop import c_sandwich,OpQueue
 
 __all__=['VMC']
 
@@ -103,7 +103,7 @@ class VMC(object):
         Return:
             number,
         '''
-        nskip,nstat=4,100
+        nskip,nstat=4,1000
         ol=[]  #local operator values
         o=None
         self.core.set_state(state)
@@ -115,10 +115,10 @@ class VMC(object):
             new_config,pratio=self.core.fire(config)
             if self.accept(pratio):
                 self.core.confirm(); accept_table.append(1)
+                config=new_config
                 if i>=self.nbath:
                     o=c_sandwich(op,config,state,runtime=self.core.get_runtime())
                     if i%nskip==0:ol.append(o)      #correlation problem?
-                config=new_config
             else:
                 self.core.reject(); accept_table.append(0)
                 if i>=self.nbath:
@@ -127,5 +127,7 @@ class VMC(object):
             if i%nstat==nstat-1:
                 print '%s Accept rate: %s'%(i+1,mean(accept_table))
                 accept_table=[]
-        return mean(ol,axis=0)
-
+        if not isinstance(op,OpQueue):
+            return mean(ol,axis=0)
+        else:
+            return [mean(oi,axis=0) for oi in zip(*ol)]

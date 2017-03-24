@@ -4,7 +4,7 @@ Stochestic Reconfiguration.
 
 from numpy import *
 from scipy.linalg import pinv
-from linop import PartialW,PartialW2,HPartialcW,
+from linop import PartialW,OpQueue
 
 def SR(H,rbm,handler,gamma=0.1,reg_params=('delta',{})):
     '''
@@ -21,8 +21,9 @@ def SR(H,rbm,handler,gamma=0.1,reg_params=('delta',{})):
             * 'pinv'  -> use pseudo inverse instead.
     '''
     for p in xrange(niter):
-        S=handler.measure(PartialW2,rbm)-conj(handler.measure(PartialW,rbm))[:,newaxis]*handler.measure(PartialW,rbm)
-        F=handler.measure(HPartialcW,rbm)-handler.measure(H,rbm)*handler.measure(PartialW,rbm).conj()
+        OPW,OH,OPW2,OPHW=handler.measure(OpQueue((PartialW,PartialH),(lambda a,b:a.conj()*a,lambda a,b:a.conj()*b)),rbm)
+        S=OPW2-OPW[:,newaxis].conj()*OPW
+        F=OPHW-OH*OPW.conj()
         #regularize S matrix to get Sinv.
         reg_method,reg_var=reg_params
         if reg_method=='delta':

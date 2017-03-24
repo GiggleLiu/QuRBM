@@ -4,7 +4,7 @@ from numpy import *
 from numpy.linalg import norm
 
 from tba.hgen import SpinSpaceConfig,sx,sy,sz
-from linop import LinOp,PartialW
+from linop import *
 from sstate import SparseState
 
 __all__=['HeisenbergH','FakeVMC']
@@ -66,5 +66,22 @@ class FakeVMC(object):
             v=state.tovec(scfg)
             v=v/norm(v)
             return sum((v.conj()*v)[:,newaxis,newaxis]*pS,axis=0)
+        elif isinstance(op,OpQueue):
+            #get H
+            v=state.tovec(scfg); v/=norm(v)
+            OH=v.conj().dot(H).dot(v)
+
+            #get W
+            configs=1-2*scfg.ind2config(arange(scfg.hndim))
+            pS=zeros([scfg.hndim,state.nin+1,state.nhid+1],dtype='complex128')
+            pS[:,1:,0]=configs
+            configs=concatenate([ones([scfg.hndim,1]),configs],axis=1)
+            pS[:,:,1:]=configs[...,newaxis]*tanh(configs.dot(state.S[:,1:]))[:,newaxis]
+            OPW=sum((v.conj()*v)[:,newaxis,newaxis]*pS,axis=0)
+
+            OPW2=sum((v.conj()*v)[:,newaxis,newaxis]*(pS*pS.conj()),axis=0)
+            #OPHW=sum((v.conj()*v)[:,newaxis,newaxis]*(H.diagonal()[...,newaxis,newaxis]*pS.conj())*v[:,newaxis,newaxis],axis=0)
+            OPHW=(v.conj()[:,newaxis,newaxis,newaxis]*(H[...,newaxis,newaxis]*pS.conj())*v[:,newaxis,newaxis]).sum(axis=(0,1))
+            return OPW,OH,OPW2,OPHW
         else:
             raise TypeError()

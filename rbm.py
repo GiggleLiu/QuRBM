@@ -119,6 +119,9 @@ class RBM(object):
         Parameters:
             :config: 1darray,
             :theta: 1darray/None, table of hidden layer output: b+v.dot(W), intended to boost operation.
+
+        Return:
+            number,
         '''
         config=self._pack_input(config)
         if theta is None: theta=config.dot(self.S[:,1:])

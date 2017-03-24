@@ -2,7 +2,7 @@ from numpy import *
 from abc import ABCMeta, abstractmethod
 import pdb
 
-__all__=['LinOp','PartialW','c_sandwich']
+__all__=['LinOp','PartialW','c_sandwich','OpQueue']
 
 class LinOp(object):
     '''A new linear operator prototype.'''
@@ -36,7 +36,6 @@ class LinOp(object):
 class PartialW(LinOp):
     '''Partial weight operator.'''
     def _sandwich(self,config,runtime,**kwargs):
-        #config=1-2*config
         theta=runtime['theta']
         partialS=zeros((len(config)+1,len(theta)+1),dtype=theta.dtype)
         #get partial ai
@@ -44,6 +43,25 @@ class PartialW(LinOp):
         #get partial bj,Wij
         partialS[:,1:]=append([1],config)[:,newaxis]*tanh(theta)
         return partialS
+
+class OpQueue(LinOp):
+    '''
+    Queue of linear operators with dependency.
+
+    Attributes:
+        :op_base: tuple, linear operators.
+        :op_derive: tuple, functions that decide derived operators (used in local measurements).
+    '''
+    def __init__(self,op_base,op_derive):
+        self.op_base,self.op_derive=op_base,op_derive
+
+    def _sandwich(self,*args,**kwargs):
+        valb,vald=[],[]
+        for op in self.op_base:
+            valb.append(c_sandwich(op,*args,**kwargs))
+        for op in self.op_derive:
+            vald.append(op(*valb))
+        return valb+vald
 
 #class HPartialWc(LinOp):
 #    def __init__(self,H):

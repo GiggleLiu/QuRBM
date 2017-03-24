@@ -14,10 +14,10 @@ from toymodel import *
 from mccore_rbm import *
 from linop import *
 
-random.seed(2)
+random.seed(21)
 
 def test_measureh():
-    print 'VMC measurements.'
+    print 'VMC measurements on HeisenbergH.'
     nsite=4
 
     #construct operator H act on config
@@ -28,7 +28,7 @@ def test_measureh():
 
     #vmc config
     core=RBMCore()
-    vmc=VMC(core,nbath=50,nsample=10000,sampling_method='metropolis')
+    vmc=VMC(core,nbath=50,nsample=100000,sampling_method='metropolis')
 
     #measurements
     O_true=FakeVMC().measure(h,rbm)
@@ -36,13 +36,13 @@ def test_measureh():
 
     err=abs(O_vmc-O_true)/abs(O_true)
     print 'Error = %.4f%%'%(err*100)
-    assert_(err<0.05)
+    assert_(err<0.02)
 
 def test_measurepw():
-    print 'VMC measurements.'
+    print 'VMC measurements on PartialW.'
     nsite=4
 
-    #construct operator H act on config
+    #construct operator pw act on config
     pw=PartialW()
 
     #generate a random rbm and the corresponding vector v
@@ -58,9 +58,36 @@ def test_measurepw():
 
     err=abs(O_vmc-O_true).sum()/abs(O_true).sum()
     print 'Error = %.4f%%'%(err*100)
-    pdb.set_trace()
-    #assert_(err<0.01)
+    assert_(err<0.05)
+
+def test_measureq():
+    print 'VMC measurements on OpQueue.'
+    nsite=4
+
+    #construct operator q act on config
+    pw=PartialW()
+    h=HeisenbergH(nsite=nsite)
+    q=OpQueue((pw,h),(lambda a,b:a.conj()*a,lambda a,b:b*a.conj()))
+    #q=OpQueue((pw,h),(lambda a,b:a.conj()*a,lambda a,b:b*a.conj()))
+
+    #generate a random rbm and the corresponding vector v
+    rbm=random_rbm(nin=nsite,nhid=nsite)
+
+    #vmc config
+    core=RBMCore()
+    vmc=VMC(core,nbath=200,nsample=10000,sampling_method='metropolis')
+
+    #measurements
+    O_trues=FakeVMC().measure(q,rbm)
+    O_vmcs=vmc.measure(q,rbm)
+
+    for O_true,O_vmc in zip(O_trues,O_vmcs):
+        err=abs(O_vmc-O_true).sum()/abs(O_true).sum()
+        print 'Error = %.4f%%'%(err*100)
+        pdb.set_trace()
+        #assert_(err<0.05)
 
 if __name__=='__main__':
-    #test_measureh()
+    test_measureq()
+    test_measureh()
     test_measurepw()

@@ -27,9 +27,10 @@ class TestLinop(object):
         #generate a random rbm and the corresponding vector v
         self.rbm=random_rbm(nin=nsite,nhid=nsite)
         self.v=self.rbm.tovec(self.scfg)
+        self.pW=PartialW()
 
-    def test_sandwich(self):
-        print 'Testing sandwich.'
+    def test_sandwichh(self):
+        print 'Testing sandwich H.'
         H,v=self.H,self.v
         config=random.randint(0,2,4)
         ket=zeros(self.scfg.hndim); ket[self.scfg.config2ind(config)]=1
@@ -38,6 +39,16 @@ class TestLinop(object):
 
         assert_almost_equal(O_s,O_true,decimal=8)
 
+    def test_sandwichpw(self):
+        print 'Testing sandwich PartialW.'
+        H,v=self.H,self.v
+        config=random.randint(0,2,4)
+        ket=zeros(self.scfg.hndim); ket[self.scfg.config2ind(config)]=1
+        O_true=ket.conj().dot(Wmat).dot(v)/sum(ket.conj()*v)
+        O_s=c_sandwich(self.pW,1-config*2,self.rbm)
+
+        assert_almost_equal(O_s,O_true,decimal=8)
+
 if __name__=='__main__':
     tl=TestLinop()
-    tl.test_sandwich()
+    tl.test_sandwichh()
