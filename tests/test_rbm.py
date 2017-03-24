@@ -35,6 +35,7 @@ class RBMTest(object):
         self.vec=array(self.vec)
 
     def test_tovec(self):
+        print 'Test @RBM.tovec'
         scfg=SpinSpaceConfig([2,2])
         configs=scfg.ind2config(arange(scfg.hndim))
         vec=self.rbm.get_weight(1-2*configs)

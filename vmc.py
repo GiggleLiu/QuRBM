@@ -2,7 +2,11 @@
 Variational Monte Carlo Kernel.
 '''
 
+from numpy import *
 from abc import ABCMeta, abstractmethod
+import pdb
+
+from linop import c_sandwich
 
 __all__=['VMC']
 
@@ -12,13 +16,28 @@ class MCCore(object):
     '''
     __metaclass__ = ABCMeta
 
-    def __init__(self,sampling_method='metropolis'):
-        self.sampling_method=sampling_method
+    @abstractmethod
+    def set_state(self,state):
+        '''
+        Set up the state for sampling purpose.
+
+        Parameters:
+            :state: <RBM>/..., a state representation.
+        '''
+        pass
 
     @abstractmethod
-    def fire(self,**kwargs):
+    def random_config(self):
+        '''Produce a random config.'''
+        pass
+
+    @abstractmethod
+    def fire(self,config,**kwargs):
         '''
         Get a possible proposal for the next move.
+
+        Parameters:
+            :config: 1darray/None, the old configuration, generate a random config if is None.
 
         Return:
             proposal,
@@ -27,6 +46,16 @@ class MCCore(object):
 
     @abstractmethod
     def reject(self,proposal,*args,**kwargs):
+        '''
+        Reject the proposal.
+
+        Parameters:
+            proposal: object, the proposal.
+        '''
+        pass
+
+    @abstractmethod
+    def confirm(self,proposal,*args,**kwargs):
         '''
         Reject the proposal.
 
@@ -62,45 +91,41 @@ class VMC(object):
             A=pratio/(1+pratio)
         return random.random()<A
 
-    def measure(self,op,state):
+    def measure(self,op,state,initial_config=None):
         '''
         Measure an operator.
 
         Parameters:
             :op: <LinOp>, a linear operator instance.
             :state: <RBM>/..., a state ansaz
+            :initial_config: None/1darray, the initial configuration used in sampling.
 
         Return:
             number,
         '''
+        nskip,nstat=4,100
         ol=[]  #local operator values
-        for i in xrange(self.nbath):
+        o=None
+        self.core.set_state(state)
+        config=initial_config if initial_config is not None else self.core.random_config()
+        accept_table=[]
+
+        for i in xrange(self.nbath+self.nsample):
             #generate new config
             new_config,pratio=self.core.fire(config)
             if self.accept(pratio):
-                #update config
-                config=new_config
-        for i in xrange(self.nsample):
-            #generate new config
-            new_config,pratio=self.core.fire(config,state)
-            if self.accept(pratio):
-                o=sandwich(config,op,state)
-                w=state.get_weight(config)
-                ol.append(o/w)      #correlation problem?
+                self.core.confirm(); accept_table.append(1)
+                if i>=self.nbath:
+                    o=c_sandwich(op,config,state,runtime=self.core.get_runtime())
+                    if i%nskip==0:ol.append(o)      #correlation problem?
                 config=new_config
             else:
-                ol.append(o/w)
-        return mean(ol)
+                self.core.reject(); accept_table.append(0)
+                if i>=self.nbath:
+                    o=c_sandwich(op,config,state,runtime=self.core.get_runtime()) if o is None else o
+                    if i%nskip==0:ol.append(o)      #correlation problem?
+            if i%nstat==nstat-1:
+                print '%s Accept rate: %s'%(i+1,mean(accept_table))
+                accept_table=[]
+        return mean(ol,axis=0)
 
-class RBMCore(MCCore):
-    def __init__(self):
-        self.thl=[]
-
-    def fire(self,config,rbm):
-        '''Fire a proposal.'''
-        nc=copy(config)  #why random flip, how about system with good quantum number?
-        iflip=random.randint(len(config))
-        nc[iflip]=1-iflip
-        #transfer probability is equal, pratio is equal to the probability ratio
-        pratio=abs(rbm.get_weight(nc)/rbm.get_weight(config))**2
-        return nc,pratio

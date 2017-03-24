@@ -1,6 +1,7 @@
 '''Sparse State Representation.'''
 
 from numpy import *
+import numbers
 
 __all__=['SparseState','visualize_sstate','vec2sstate','soverlap']
 
@@ -30,7 +31,7 @@ class SparseState(object):
         elif isinstance(target,numbers.Number):
             return SparseState(self.ws*target,self.configs)
         else:
-            raise TypeError()
+            return target.__rmul__(self)
 
     def __rmul__(self,target):
         if isinstance(target,SparseState):
@@ -39,13 +40,15 @@ class SparseState(object):
             return SparseState(self.ws*target,self.configs)
         else:
             raise TypeError()
-        #if hasattr(target,'opt_l'):
-        #    return target.rmul
+
+    def __iter__(self):
+        for w,config in zip(self.ws,self.configs):
+            yield w,config
 
     def tovec(self,spaceconfig):
         '''To vector.'''
         vec=zeros(spaceconfig.hndim,dtype=self.ws.dtype)
-        inds=spaceconfig.config2ind(self.configs)
+        inds=spaceconfig.config2ind((1-self.configs)/2)
         add.at(vec,inds,self.ws)
         return vec
 
@@ -62,7 +65,7 @@ def vec2sstate(vec,spaceconfig,tol=1e-8):
     '''Transform a vector into SparseState'''
     mask=abs(vec)>1e-8
     inds=where(mask)
-    configs=spaceconfig.ind2config(inds[0])
+    configs=1-2*spaceconfig.ind2config(inds[0])
     return SparseState(vec[mask],configs)
 
 def soverlap(bra,ket):

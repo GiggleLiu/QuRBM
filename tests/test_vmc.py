@@ -9,24 +9,58 @@ sys.path.insert(0,'../')
 
 from tba.hgen import SpinSpaceConfig,sx,sy,sz
 from vmc import *
+from rbm import *
 from toymodel import *
+from mccore_rbm import *
+from linop import *
 
-def test_measure():
-    J=1.
-    scfg=SpinSpaceConfig([4,2])
-    #construct true H
-    I2,I4=eye(2),eye(4)
-    h2=J/4.*(kron(sx,sx)+kron(sz,sz)+kron(sy,sy))
-    H=kron(h2,I4)+kron(kron(I2,h2),I2)+kron(I4,h2)
-    h=HeisenbergH(nsite=4)
-    config=array([1,1,0,1])
-    res=h.rmatmul(config)
-    vec=res.tovec(scfg)
-    v0=zeros(scfg.hndim); v0[scfg.config2ind(config)]=1
-    O_true=v0.conj().dot(H).dot(v0)
-    assert_allclose(vec,v_true)
+random.seed(2)
 
-    vmc.measure(state,h)
+def test_measureh():
+    print 'VMC measurements.'
+    nsite=4
+
+    #construct operator H act on config
+    h=HeisenbergH(nsite=nsite)
+
+    #generate a random rbm and the corresponding vector v
+    rbm=random_rbm(nin=nsite,nhid=nsite)
+
+    #vmc config
+    core=RBMCore()
+    vmc=VMC(core,nbath=50,nsample=10000,sampling_method='metropolis')
+
+    #measurements
+    O_true=FakeVMC().measure(h,rbm)
+    O_vmc=vmc.measure(h,rbm)
+
+    err=abs(O_vmc-O_true)/abs(O_true)
+    print 'Error = %.4f%%'%(err*100)
+    assert_(err<0.05)
+
+def test_measurepw():
+    print 'VMC measurements.'
+    nsite=4
+
+    #construct operator H act on config
+    pw=PartialW()
+
+    #generate a random rbm and the corresponding vector v
+    rbm=random_rbm(nin=nsite,nhid=nsite)
+
+    #vmc config
+    core=RBMCore()
+    vmc=VMC(core,nbath=1000,nsample=100000,sampling_method='metropolis')
+
+    #measurements
+    O_true=FakeVMC().measure(pw,rbm)
+    O_vmc=vmc.measure(pw,rbm)
+
+    err=abs(O_vmc-O_true).sum()/abs(O_true).sum()
+    print 'Error = %.4f%%'%(err*100)
+    pdb.set_trace()
+    #assert_(err<0.01)
 
 if __name__=='__main__':
-    test_measure()
+    #test_measureh()
+    test_measurepw()

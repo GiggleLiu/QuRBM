@@ -21,7 +21,8 @@ def test_model():
     H=kron(h2,I4)+kron(kron(I2,h2),I2)+kron(I4,h2)
     h=HeisenbergH(nsite=4)
     config=array([1,1,0,1])
-    res=h.rmatmul(config)
+    print 'Testing rmatmul of Hamiltonian'
+    res=h.rmatmul(1-2*config)
     vec=res.tovec(scfg)
     v0=zeros(scfg.hndim); v0[scfg.config2ind(config)]=1
     v_true=v0.dot(H)
