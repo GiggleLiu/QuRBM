@@ -3,10 +3,14 @@ Stochestic Reconfiguration.
 '''
 
 from numpy import *
-from scipy.linalg import pinv
+from scipy.linalg import pinv,inv
+import pdb
+
 from linop import PartialW,OpQueue
 
-def SR(H,rbm,handler,gamma=0.1,reg_params=('delta',{})):
+__all__=['SR']
+
+def SR(H,rbm,handler,gamma=0.1,niter=200,reg_params=('delta',{})):
     '''
     Stochestic Reconfiguration.
 
@@ -15,19 +19,22 @@ def SR(H,rbm,handler,gamma=0.1,reg_params=('delta',{})):
         :rbm: <RBM>, the state.
         :handler: <VMC>/..., the object with @measure(op) method.
         :gamma: float/func, the update ratio, or as a function of interation p.
+        :niter: int, number of iteration.
         :reg_params: (str,dict), tuple of (method name, parameter dict) for regularization of S matrix. Methods are
 
             * 'delta' -> S_{kk'}^{reg} = S_{kk'} + \lambda(p) \delta_{kk'} S_{kk}, \lambda(p)=max(\lambda_0 b^p,\lambda_{min}), with p the # of iteration.
             * 'pinv'  -> use pseudo inverse instead.
     '''
+    q=OpQueue((PartialW(),H),(lambda a,b:a.conj()[...,newaxis,newaxis]*a,lambda a,b:b*a.conj()))
     for p in xrange(niter):
-        OPW,OH,OPW2,OPHW=handler.measure(OpQueue((PartialW,PartialH),(lambda a,b:a.conj()*a,lambda a,b:a.conj()*b)),rbm)
+        OPW,OH,OPW2,OPWH=handler.measure(q,rbm)
+        OPW=OPW.ravel()[1:]; OPW2=OPW2.reshape([prod(rbm.S.shape)]*2)[1:,1:]; OPWH=OPWH.ravel()[1:]
         S=OPW2-OPW[:,newaxis].conj()*OPW
-        F=OPHW-OH*OPW.conj()
+        F=OPWH-OPW.conj()*OH
         #regularize S matrix to get Sinv.
         reg_method,reg_var=reg_params
         if reg_method=='delta':
-            lamb=max(reg_var.get('lambda0',100)*ref_var.get('b',0.9)**p,1e-4)
+            lamb=max(reg_var.get('lambda0',100)*reg_var.get('b',0.9)**p,1e-4)
             fill_diagonal(S,S.diagonal()+lamb)
             Sinv=inv(S)
         elif reg_method=='pinv':
@@ -35,5 +42,5 @@ def SR(H,rbm,handler,gamma=0.1,reg_params=('delta',{})):
         else:
             raise ValueError()
         g=gamma if not hasattr(gamma,'__call__') else gamma(p)
-        rbm.W-=g*Sinv.dot(F).reshape(rbm.W.shape)
+        rbm.S-=append([0],g*Sinv.dot(F)).reshape(rbm.S.shape)
     return rbm

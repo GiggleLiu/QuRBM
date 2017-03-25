@@ -44,15 +44,20 @@ class HeisenbergH(LinOp):
 
 class FakeVMC(object):
     '''The Fake VMC program'''
-    def measure(self,op,state,initial_config=None):
-        '''Measure an operator through detailed calculation.'''
-        nsite=state.nin
+    def get_H(self,nsite):
         J=1.
         scfg=SpinSpaceConfig([nsite,2])
         h2=J/4.*(kron(sx,sx)+kron(sz,sz)+kron(sy,sy))
         H=0
         for i in xrange(nsite-1):
             H=H+kron(kron(eye(2**i),h2),eye(2**(nsite-2-i)))
+        return H
+
+    def measure(self,op,state,initial_config=None):
+        '''Measure an operator through detailed calculation.'''
+        nsite=state.nin
+        H=self.get_H(nsite)
+        scfg=SpinSpaceConfig([nsite,2])
         if isinstance(op,HeisenbergH):
             op=H
             v=state.tovec(scfg)
@@ -79,9 +84,9 @@ class FakeVMC(object):
             pS[:,:,1:]=configs[...,newaxis]*tanh(configs.dot(state.S[:,1:]))[:,newaxis]
             OPW=sum((v.conj()*v)[:,newaxis,newaxis]*pS,axis=0)
 
-            OPW2=sum((v.conj()*v)[:,newaxis,newaxis]*(pS*pS.conj()),axis=0)
+            OPW2=sum((v.conj()*v)[:,newaxis,newaxis,newaxis,newaxis]*(pS.conj()[...,newaxis,newaxis]*pS[:,newaxis,newaxis]),axis=0)
             #OPHW=sum((v.conj()*v)[:,newaxis,newaxis]*(H.diagonal()[...,newaxis,newaxis]*pS.conj())*v[:,newaxis,newaxis],axis=0)
-            OPHW=(v.conj()[:,newaxis,newaxis,newaxis]*(H[...,newaxis,newaxis]*pS.conj())*v[:,newaxis,newaxis]).sum(axis=(0,1))
-            return OPW,OH,OPW2,OPHW
+            OPWH=(v.conj()[:,newaxis,newaxis,newaxis]*(pS[:,newaxis].conj()*H[...,newaxis,newaxis])*v[:,newaxis,newaxis]).sum(axis=(0,1))
+            return OPW,OH,OPW2,OPWH
         else:
             raise TypeError()

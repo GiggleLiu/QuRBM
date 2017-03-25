@@ -22,10 +22,12 @@ class RBMCore(MCCore):
 
     def set_state(self,state):
         self.state=state
+        self.theta=None   # bug fix note: remember these two lines are needed!
+        self._theta=None
 
     def random_config(self):
         rbm=self.state
-        config=2*random.randint(0,2,rbm.nin)-1
+        config=1-2*random.randint(0,2,rbm.nin)
         return config
 
     def fire(self,config):
@@ -34,7 +36,7 @@ class RBMCore(MCCore):
         #generate a new config by flipping a spin
         nc=copy(config)  #why random flip, how about system with good quantum number?
         iflip=random.randint(rbm.nin)
-        nc[iflip]*=-1 #1-iflip
+        nc[iflip]*=-1
         #transfer probability is equal, pratio is equal to the probability ratio
         if self.theta is None: self.theta=rbm._pack_input(config).dot(rbm.S[:,1:])
         self._theta=self.theta+2*nc[iflip]*rbm.S[iflip+1,1:] 

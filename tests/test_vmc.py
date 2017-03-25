@@ -28,7 +28,7 @@ def test_measureh():
 
     #vmc config
     core=RBMCore()
-    vmc=VMC(core,nbath=50,nsample=100000,sampling_method='metropolis')
+    vmc=VMC(core,nbath=50,nsample=50000,sampling_method='metropolis')
 
     #measurements
     O_true=FakeVMC().measure(h,rbm)
@@ -36,7 +36,7 @@ def test_measureh():
 
     err=abs(O_vmc-O_true)/abs(O_true)
     print 'Error = %.4f%%'%(err*100)
-    assert_(err<0.02)
+    assert_(err<0.05)
 
 def test_measurepw():
     print 'VMC measurements on PartialW.'
@@ -50,7 +50,7 @@ def test_measurepw():
 
     #vmc config
     core=RBMCore()
-    vmc=VMC(core,nbath=1000,nsample=100000,sampling_method='metropolis')
+    vmc=VMC(core,nbath=1000,nsample=50000,sampling_method='metropolis')
 
     #measurements
     O_true=FakeVMC().measure(pw,rbm)
@@ -58,7 +58,7 @@ def test_measurepw():
 
     err=abs(O_vmc-O_true).sum()/abs(O_true).sum()
     print 'Error = %.4f%%'%(err*100)
-    assert_(err<0.05)
+    assert_(err<0.08)
 
 def test_measureq():
     print 'VMC measurements on OpQueue.'
@@ -67,15 +67,14 @@ def test_measureq():
     #construct operator q act on config
     pw=PartialW()
     h=HeisenbergH(nsite=nsite)
-    q=OpQueue((pw,h),(lambda a,b:a.conj()*a,lambda a,b:b*a.conj()))
-    #q=OpQueue((pw,h),(lambda a,b:a.conj()*a,lambda a,b:b*a.conj()))
+    q=OpQueue((pw,h),(lambda a,b:a.conj()[...,newaxis,newaxis]*a,lambda a,b:b*a.conj()))
 
     #generate a random rbm and the corresponding vector v
     rbm=random_rbm(nin=nsite,nhid=nsite)
 
     #vmc config
     core=RBMCore()
-    vmc=VMC(core,nbath=200,nsample=10000,sampling_method='metropolis')
+    vmc=VMC(core,nbath=200,nsample=50000,sampling_method='metropolis')
 
     #measurements
     O_trues=FakeVMC().measure(q,rbm)
@@ -84,8 +83,7 @@ def test_measureq():
     for O_true,O_vmc in zip(O_trues,O_vmcs):
         err=abs(O_vmc-O_true).sum()/abs(O_true).sum()
         print 'Error = %.4f%%'%(err*100)
-        pdb.set_trace()
-        #assert_(err<0.05)
+        assert_(err<0.05)
 
 if __name__=='__main__':
     test_measureq()
