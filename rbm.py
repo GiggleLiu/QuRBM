@@ -6,6 +6,7 @@ from numpy import *
 import numbers
 
 from sstate import SparseState
+from group import NoGroup
 
 __all__=['RBM','random_rbm']
 
@@ -18,21 +19,15 @@ class RBM(object):
              [a W W W]]
 
     Attributes:
-        :S: 2darray, data matrix.
         :a,b: 1darray, the bias
         :W: 2darray, the weights
+        :group: Group, translation group.
+
         :nin,nhid: int, number of input and hidden layer, (nin,nh) = shape(W)
     '''
-    def __init__(self,S):
-        self.S=asarray(S)
-
-    def _pack_input(self,config):
-        ''''add 1 to the head of config if needed.'''
-        return config if config.shape[-1]==self.S.shape[0] else insert(config,0,1,axis=-1)
-
-    def _pack_hidden(self,config):
-        ''''add 1 to the head of config if needed.'''
-        return config if config.shape[-1]==self.S.shape[1] else insert(config,0,1,axis=-1)
+    def __init__(self,a,b,W,group=NoGroup()):
+        if not len(a)*len(b)==prod(W.shape)*group.ng:raise ValueError()
+        self.a,self.b,self.W,self.group=asarray(a),asarray(b),asarray(W),group
 
     def __rmul__(self,target):
         if isinstance(target,SparseState):
@@ -52,59 +47,48 @@ class RBM(object):
             raise TypeError()
 
     @property
-    def nhid(self): return self.S.shape[1]-1
+    def nhid(self): return len(self.b)
 
     @property
-    def nin(self): return self.S.shape[0]-1
+    def nin(self): return len(self.a)
 
-    @property
-    def a(self): return self.S[1:,0]
-
-    @property
-    def b(self): return self.S[0,1:]
-
-    @property
-    def W(self): return self.S[1:,1:]
-
-    def feed_visible(self,v,return_prob=False):
+    def feed_input(self,v):
         '''
         Feed visible inputs, and get output in hidden layers.
 
         Parameters:
             :v: 1d array, input vector.
-            :return_prob: bool, 
 
         Return:
-            uint8, the output. Return (ouput, probability) pair instead if return_prob is True.
+            1darray, raw output in hidden nodes.
         '''
-        v=self._pack_input(v)
-        h=expit(v.dot(self.S))
-        binary=(random.random(h.shape)<h).view('uint8')
-        if return_prob:
-            return binary,h
-        else:
-            return binary
+        nj=self.W.shape[1]
+        hl=[]
+        for ig in xrange(self.group.ng):
+            vi=self.group.apply(v,ig)
+            hi=vi.dot(self.W)+self.b[ig*nj:(ig+1)*nj]
+            hl.append(hi)
+        return concatenate(hl,axis=-1)
 
-    def feed_hidden(self,h,return_prob=False):
+    def feed_hidden(self,h):
         '''
         Feed hidden inputs, and reconstruct visible layers.
 
         Parameters:
             :h: 1d array, input vector.
-            :return_prob: bool, 
 
         Return:
-            uint8, the output. Return (ouput, probability) pair instead if return_prob is True.
+            1darray, raw output in input nodes.
         '''
-        h=self._pack_hidden(h)
-        v=expit(h.dot(self.S.T))
-        binary=(random.random(v.shape)<v).view('uint8')
-        if return_prob:
-            return binary,v
-        else:
-            return binary
+        vl=[]
+        nj=self.W.shape[1]
+        for ig in xrange(self.group.ng):
+            hi=h[...,ig*nj:nj*(ig+1)]
+            vi=self.group.apply(hi.dot(self.W.T)+self.a,-ig)
+            vl.append(vi)
+        return sum(vl,axis=0)
 
-    def tovec(self,spaceconfig):
+    def tovec(self,spaceconfig):  #poor designed interface.
         '''
         Get the state vector.
 
@@ -123,17 +107,15 @@ class RBM(object):
         Return:
             number,
         '''
-        config=self._pack_input(config)
-        if theta is None: theta=config.dot(self.S[:,1:])
-        return exp(config.dot(self.S[:,0]))*prod(2*cosh(theta),axis=-1)
+        group=self.group
+        if theta is None: theta=self.feed_input(config)
+        return exp(config.dot(self.a))*prod(2*cosh(theta),axis=-1)
 
-    def get_weight_ratio(self,config1,config2):
-        pass
-
-def random_rbm(nin,nhid):
+def random_rbm(nin,nhid,group=NoGroup()):
     '''Get a random Restricted Boltzmann Machine'''
-    S=(random.random([nin+1,nhid+1])-0.5)/2**nhid+(1j*random.random([nin+1,nhid+1])-0.5j)
-    S[0,0]=0
-    return RBM(S)
-
-
+    if nhid%group.ng!=0: raise ValueError()
+    data=(random.random(nin+nhid+nin*nhid/group.ng)-0.5)/2**nhid+1j*random.random(nin+nhid+nin*nhid/group.ng)-0.5j
+    a=data[:nin]
+    b=data[nin:nin+nhid]
+    W=data[nin+nhid:].reshape([nin,nhid/group.ng])
+    return RBM(a,b,W,group=group)

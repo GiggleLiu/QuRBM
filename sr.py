@@ -25,10 +25,9 @@ def SR(H,rbm,handler,gamma=0.1,niter=200,reg_params=('delta',{})):
             * 'delta' -> S_{kk'}^{reg} = S_{kk'} + \lambda(p) \delta_{kk'} S_{kk}, \lambda(p)=max(\lambda_0 b^p,\lambda_{min}), with p the # of iteration.
             * 'pinv'  -> use pseudo inverse instead.
     '''
-    q=OpQueue((PartialW(),H),(lambda a,b:a.conj()[...,newaxis,newaxis]*a,lambda a,b:b*a.conj()))
+    q=OpQueue((PartialW(),H),(lambda a,b:a.conj()[...,newaxis]*a,lambda a,b:b*a.conj()))
     for p in xrange(niter):
         OPW,OH,OPW2,OPWH=handler.measure(q,rbm)
-        OPW=OPW.ravel()[1:]; OPW2=OPW2.reshape([prod(rbm.S.shape)]*2)[1:,1:]; OPWH=OPWH.ravel()[1:]
         S=OPW2-OPW[:,newaxis].conj()*OPW
         F=OPWH-OPW.conj()*OH
         #regularize S matrix to get Sinv.
@@ -42,5 +41,8 @@ def SR(H,rbm,handler,gamma=0.1,niter=200,reg_params=('delta',{})):
         else:
             raise ValueError()
         g=gamma if not hasattr(gamma,'__call__') else gamma(p)
-        rbm.S-=append([0],g*Sinv.dot(F)).reshape(rbm.S.shape)
+        ds=g*Sinv.dot(F)
+        rbm.a-=ds[:rbm.nin]
+        rbm.b-=ds[rbm.nin:rbm.nin+rbm.nhid]
+        rbm.W-=ds[rbm.nin+rbm.nhid:].reshape(rbm.W.shape)
     return rbm

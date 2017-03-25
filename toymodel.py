@@ -2,6 +2,7 @@
 
 from numpy import *
 from numpy.linalg import norm
+import pdb
 
 from tba.hgen import SpinSpaceConfig,sx,sy,sz
 from linop import *
@@ -64,13 +65,14 @@ class FakeVMC(object):
             return v.conj().dot(op).dot(v)/sum(v.conj()*v)
         elif isinstance(op,PartialW):
             configs=1-2*scfg.ind2config(arange(scfg.hndim))
-            pS=zeros([scfg.hndim,state.nin+1,state.nhid+1],dtype='complex128')
-            pS[:,1:,0]=configs
-            configs=concatenate([ones([scfg.hndim,1]),configs],axis=1)
-            pS[:,:,1:]=configs[...,newaxis]*tanh(configs.dot(state.S[:,1:]))[:,newaxis]
+            pS=[]
+            pS.append(configs)
+            pS.append(tanh(state.feed_input(configs)))
+            pS.append((configs[...,newaxis]*tanh(state.feed_input(configs))[:,newaxis]).reshape([configs.shape[0],-1]))
+            pS=concatenate(pS,axis=-1)
             v=state.tovec(scfg)
             v=v/norm(v)
-            return sum((v.conj()*v)[:,newaxis,newaxis]*pS,axis=0)
+            return sum((v.conj()*v)[:,newaxis]*pS,axis=0)
         elif isinstance(op,OpQueue):
             #get H
             v=state.tovec(scfg); v/=norm(v)
@@ -78,15 +80,16 @@ class FakeVMC(object):
 
             #get W
             configs=1-2*scfg.ind2config(arange(scfg.hndim))
-            pS=zeros([scfg.hndim,state.nin+1,state.nhid+1],dtype='complex128')
-            pS[:,1:,0]=configs
-            configs=concatenate([ones([scfg.hndim,1]),configs],axis=1)
-            pS[:,:,1:]=configs[...,newaxis]*tanh(configs.dot(state.S[:,1:]))[:,newaxis]
-            OPW=sum((v.conj()*v)[:,newaxis,newaxis]*pS,axis=0)
+            pS=[]
+            pS.append(configs)
+            pS.append(tanh(state.feed_input(configs)))
+            pS.append((configs[...,newaxis]*tanh(state.feed_input(configs))[:,newaxis]).reshape([configs.shape[0],-1]))
+            pS=concatenate(pS,axis=-1)
+            OPW=sum((v.conj()*v)[:,newaxis]*pS,axis=0)
 
-            OPW2=sum((v.conj()*v)[:,newaxis,newaxis,newaxis,newaxis]*(pS.conj()[...,newaxis,newaxis]*pS[:,newaxis,newaxis]),axis=0)
+            OPW2=sum((v.conj()*v)[:,newaxis,newaxis]*(pS.conj()[:,:,newaxis]*pS[:,newaxis]),axis=0)
             #OPHW=sum((v.conj()*v)[:,newaxis,newaxis]*(H.diagonal()[...,newaxis,newaxis]*pS.conj())*v[:,newaxis,newaxis],axis=0)
-            OPWH=(v.conj()[:,newaxis,newaxis,newaxis]*(pS[:,newaxis].conj()*H[...,newaxis,newaxis])*v[:,newaxis,newaxis]).sum(axis=(0,1))
+            OPWH=(v.conj()[:,newaxis,newaxis]*(pS[:,newaxis].conj()*H[...,newaxis])*v[:,newaxis]).sum(axis=(0,1))
             return OPW,OH,OPW2,OPWH
         else:
             raise TypeError()

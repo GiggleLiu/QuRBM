@@ -37,12 +37,14 @@ class PartialW(LinOp):
     '''Partial weight operator.'''
     def _sandwich(self,config,runtime,**kwargs):
         theta=runtime['theta']
-        partialS=zeros((len(config)+1,len(theta)+1),dtype=theta.dtype)
+        partialS=[]
         #get partial ai
-        partialS[1:,0]=config
-        #get partial bj,Wij
-        partialS[:,1:]=append([1],config)[:,newaxis]*tanh(theta)
-        return partialS
+        partialS.append(config)
+        #get partial bj
+        partialS.append(tanh(theta))
+        #get partial Wij
+        partialS.append((config[:,newaxis]*tanh(theta)).ravel())
+        return concatenate(partialS)
 
 class OpQueue(LinOp):
     '''

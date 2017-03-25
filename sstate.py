@@ -53,7 +53,7 @@ class SparseState(object):
         return vec
 
     def tobra(self):
-        '''hermitian conjugate.'''
+        '''Hermitian conjugate.'''
         return SparseState(self.ws.conj(),self.configs)
 
 def visualize_sstate(sstate,**kwargs):

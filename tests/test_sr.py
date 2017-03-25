@@ -29,10 +29,12 @@ def test_sr_fake():
     for k in xrange(100):
         print 'Running %s-th batch.'%k
         rbm=SR(h,rbm,handler=fv,niter=1,gamma=0.2,reg_params=('delta',{'b':0.8,'lambda0':100*0.8**(5*k)}))
-        v=rbm.tovec(scfg); v=v/norm(v)
+        v=rbm.tovec(scfg)
+        v=v/norm(v)
         err=1-abs(v.conj().dot(v_true))
         print 'Error = %.4f%%'%(err*100)
         el.append(err)
+    pdb.set_trace()
     savetxt('err0.dat',el)
     assert_(err<0.01)
 
@@ -46,7 +48,7 @@ def test_sr():
 
     #vmc config
     core=RBMCore()
-    vmc=VMC(core,nbath=200,nsample=10000,sampling_method='metropolis')
+    vmc=VMC(core,nbath=200,nsample=10000,nmeasure=4,sampling_method='metropolis')
 
     fv=FakeVMC()
     v_true=eigh(fv.get_H(nsite))[1][:,0]
@@ -71,7 +73,7 @@ def show_err_sr():
     plot(el0,lw=2)
     plot(el,lw=2)
     xlabel('iteration',fontsize=16)
-    ylabel(r'$\log(1-\|\left\langle\psi|\tilde{\psi}\right\rangle\|_2)$',fontsize=16)
+    ylabel(r'$1-\|\left\langle\psi|\tilde{\psi}\right\rangle\|_2$',fontsize=16)
     ylim(1e-8,1)
     yscale('log')
     legend(['Exact','VMC'])

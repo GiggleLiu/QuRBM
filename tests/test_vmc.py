@@ -14,7 +14,7 @@ from toymodel import *
 from mccore_rbm import *
 from linop import *
 
-random.seed(21)
+random.seed(2)
 
 def test_measureh():
     print 'VMC measurements on HeisenbergH.'
@@ -24,19 +24,19 @@ def test_measureh():
     h=HeisenbergH(nsite=nsite)
 
     #generate a random rbm and the corresponding vector v
-    rbm=random_rbm(nin=nsite,nhid=nsite)
+    rbm=random_rbm(nin=nsite,nhid=nsite-1)
 
     #vmc config
     core=RBMCore()
-    vmc=VMC(core,nbath=50,nsample=50000,sampling_method='metropolis')
+    vmc=VMC(core,nbath=100,nsample=500000,nmeasure=nsite,sampling_method='metropolis')
 
     #measurements
     O_true=FakeVMC().measure(h,rbm)
-    O_vmc=vmc.measure(h,rbm)
+    O_vmc=vmc.measure(h,rbm,tol=1e-4)
 
     err=abs(O_vmc-O_true)/abs(O_true)
     print 'Error = %.4f%%'%(err*100)
-    assert_(err<0.05)
+    assert_(err<0.1)
 
 def test_measurepw():
     print 'VMC measurements on PartialW.'
@@ -46,11 +46,11 @@ def test_measurepw():
     pw=PartialW()
 
     #generate a random rbm and the corresponding vector v
-    rbm=random_rbm(nin=nsite,nhid=nsite)
+    rbm=random_rbm(nin=nsite,nhid=nsite-1)
 
     #vmc config
     core=RBMCore()
-    vmc=VMC(core,nbath=1000,nsample=50000,sampling_method='metropolis')
+    vmc=VMC(core,nbath=1000,nsample=50000,nmeasure=nsite,sampling_method='metropolis')
 
     #measurements
     O_true=FakeVMC().measure(pw,rbm)
@@ -58,7 +58,7 @@ def test_measurepw():
 
     err=abs(O_vmc-O_true).sum()/abs(O_true).sum()
     print 'Error = %.4f%%'%(err*100)
-    assert_(err<0.08)
+    assert_(err<0.1)
 
 def test_measureq():
     print 'VMC measurements on OpQueue.'
@@ -67,14 +67,14 @@ def test_measureq():
     #construct operator q act on config
     pw=PartialW()
     h=HeisenbergH(nsite=nsite)
-    q=OpQueue((pw,h),(lambda a,b:a.conj()[...,newaxis,newaxis]*a,lambda a,b:b*a.conj()))
+    q=OpQueue((pw,h),(lambda a,b:a.conj()[...,newaxis]*a,lambda a,b:a.conj()*b))
 
     #generate a random rbm and the corresponding vector v
-    rbm=random_rbm(nin=nsite,nhid=nsite)
+    rbm=random_rbm(nin=nsite,nhid=nsite-1)
 
     #vmc config
     core=RBMCore()
-    vmc=VMC(core,nbath=200,nsample=50000,sampling_method='metropolis')
+    vmc=VMC(core,nbath=200,nsample=50000,nmeasure=nsite,sampling_method='metropolis')
 
     #measurements
     O_trues=FakeVMC().measure(q,rbm)
@@ -83,9 +83,9 @@ def test_measureq():
     for O_true,O_vmc in zip(O_trues,O_vmcs):
         err=abs(O_vmc-O_true).sum()/abs(O_true).sum()
         print 'Error = %.4f%%'%(err*100)
-        assert_(err<0.05)
+        assert_(err<0.1)
 
 if __name__=='__main__':
     test_measureq()
-    test_measureh()
     test_measurepw()
+    test_measureh()

@@ -1,7 +1,7 @@
 '''Random Boltzmann Machine Kernel for Monte Carlo.'''
 
 from numpy import *
-import pdb
+import pdb,time
 
 from vmc import MCCore
 
@@ -38,9 +38,10 @@ class RBMCore(MCCore):
         iflip=random.randint(rbm.nin)
         nc[iflip]*=-1
         #transfer probability is equal, pratio is equal to the probability ratio
-        if self.theta is None: self.theta=rbm._pack_input(config).dot(rbm.S[:,1:])
-        self._theta=self.theta+2*nc[iflip]*rbm.S[iflip+1,1:] 
-        pratio=abs(rbm.get_weight(nc,theta=self._theta)/rbm.get_weight(config,theta=self.theta))**2
+        if self.theta is None: self.theta=rbm.feed_input(config)
+        self._theta=self.theta+2*nc[iflip]*rbm.W[iflip] 
+        pratio=abs(exp(2*nc[iflip]*rbm.a[iflip])*prod(cosh(self._theta)/cosh(self.theta)))**2
+        #pratio_=abs(rbm.get_weight(nc,theta=self._theta)/rbm.get_weight(config,theta=self.theta))**2
         return nc,pratio
 
     def reject(self,*args,**kwargs):

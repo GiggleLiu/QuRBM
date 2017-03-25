@@ -4,6 +4,7 @@ Variational Monte Carlo Kernel.
 
 from numpy import *
 from abc import ABCMeta, abstractmethod
+from profilehooks import profile
 import pdb
 
 from linop import c_sandwich,OpQueue
@@ -68,10 +69,12 @@ class VMC(object):
     '''
     Variational Monte Carlo Engine.
     '''
-    def __init__(self,core,nbath,nsample,sampling_method='metropolis'):
+    def __init__(self,core,nbath,nsample,nmeasure,nstat=1000,sampling_method='metropolis'):
         self.nbath,self.nsample=nbath,nsample
         self.core=core
         self.sampling_method=sampling_method
+        self.nstat=nstat
+        self.nmeasure=nmeasure
 
     def accept(self,pratio,method='metropolis'):
         '''
@@ -91,19 +94,20 @@ class VMC(object):
             A=pratio/(1+pratio)
         return random.random()<A
 
-    def measure(self,op,state,initial_config=None):
+    def measure(self,op,state,tol=0,initial_config=None):
         '''
         Measure an operator.
 
         Parameters:
             :op: <LinOp>, a linear operator instance.
             :state: <RBM>/..., a state ansaz
+            :tol: float, tolerence.
             :initial_config: None/1darray, the initial configuration used in sampling.
 
         Return:
             number,
         '''
-        nskip,nstat=4,1000
+        nmeasure,nstat=self.nmeasure,self.nstat
         ol=[]  #local operator values
         o=None
         self.core.set_state(state)
@@ -118,15 +122,24 @@ class VMC(object):
                 config=new_config
                 if i>=self.nbath:
                     o=c_sandwich(op,config,state,runtime=self.core.get_runtime())
-                    if i%nskip==0:ol.append(o)      #correlation problem?
+                    if i%nmeasure==0:ol.append(o)      #correlation problem?
             else:
                 self.core.reject(); accept_table.append(0)
                 if i>=self.nbath:
                     o=c_sandwich(op,config,state,runtime=self.core.get_runtime()) if o is None else o
-                    if i%nskip==0:ol.append(o)      #correlation problem?
-            if i%nstat==nstat-1:
-                print '%s Accept rate: %s'%(i+1,mean(accept_table))
+                    if i%nmeasure==0:ol.append(o)      #correlation problem?
+            if i%nstat==nstat-1 and len(ol)>0:
+                if not isinstance(op,OpQueue):
+                    varo=abs(var(ol,axis=0).sum()/len(ol))
+                else:
+                    varo=array([abs(var(oi,axis=0).sum()/len(ol)) for oi in zip(*ol)])
+                print '%-10s Accept rate: %.3f, Std Err: %.5f'%(i+1,mean(accept_table),sum(varo))
                 accept_table=[]
+
+                #accurate results obtained.
+                if len(ol)>100 and all(varo<tol):
+                    break
+
         if not isinstance(op,OpQueue):
             return mean(ol,axis=0)
         else:
