@@ -20,7 +20,7 @@ class TestLinop(object):
         #construct true H
         I2,I4=eye(2),eye(4)
         h2=J/4.*(kron(sx,sx)+kron(sz,sz)+kron(sy,sy))
-        self.H=kron(h2,I4)+kron(kron(I2,h2),I2)+kron(I4,h2)
+        self.H=kron(h2,I4)+kron(kron(I2,h2),I2)+kron(I4,h2)+J/4.*(kron(kron(sz,I4),sz)+kron(kron(sy,I4),sy)+kron(kron(sx,I4),sx))
 
         #construct operator H act on config
         self.h=HeisenbergH(nsite=4)
@@ -66,4 +66,4 @@ class TestLinop(object):
 if __name__=='__main__':
     tl=TestLinop()
     tl.test_sandwichh()
-    tl.test_sandwichpw()
+    #tl.test_sandwichpw()

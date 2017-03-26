@@ -26,8 +26,8 @@ class RBM(object):
         :nin,nhid: int, number of input and hidden layer, (nin,nh) = shape(W)
     '''
     def __init__(self,a,b,W,group=NoGroup()):
-        if not len(a)*len(b)==prod(W.shape)*group.ng:raise ValueError()
         self.a,self.b,self.W,self.group=asarray(a),asarray(b),asarray(W),group
+        if not len(self.a)*len(self.b)==prod(self.W.shape)*group.ng:raise ValueError()
 
     def __rmul__(self,target):
         if isinstance(target,SparseState):
@@ -45,6 +45,12 @@ class RBM(object):
             return self.__rmul__(target).conj()
         else:
             raise TypeError()
+
+    def __str__(self):
+        return '<RBM>\na = %s\nb = %s\nW = %s\nGroup = %s'%(self.a,self.b,self.W,self.group)
+
+    def __repr__(self):
+        return '<RBM> in[%s] hid[%s x %s]'%(self.nin,self.group.ng,self.W.shape[1])
 
     @property
     def nhid(self): return len(self.b)

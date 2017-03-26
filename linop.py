@@ -35,7 +35,7 @@ class LinOp(object):
 
 class PartialW(LinOp):
     '''Partial weight operator.'''
-    def _sandwich(self,config,runtime,**kwargs):
+    def _sandwich(self,config,state,runtime,**kwargs):
         theta=runtime['theta']
         partialS=[]
         #get partial ai
@@ -43,7 +43,9 @@ class PartialW(LinOp):
         #get partial bj
         partialS.append(tanh(theta))
         #get partial Wij
-        partialS.append((config[:,newaxis]*tanh(theta)).ravel())
+        config_g=array([state.group.apply(config,ig) for ig in xrange(state.group.ng)])
+        partialS.append(sum(config_g[:,:,newaxis]*tanh(theta).reshape([state.group.ng,1,state.W.shape[1]]),axis=0).ravel())
+        #partialS.append((config[:,newaxis]*tanh(theta)).ravel())
         return concatenate(partialS)
 
 class OpQueue(LinOp):

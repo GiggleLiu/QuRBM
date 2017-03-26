@@ -18,9 +18,9 @@ def test_model():
     #construct true H
     I2,I4=eye(2),eye(4)
     h2=J/4.*(kron(sx,sx)+kron(sz,sz)+kron(sy,sy))
-    H=kron(h2,I4)+kron(kron(I2,h2),I2)+kron(I4,h2)
+    H=kron(h2,I4)+kron(kron(I2,h2),I2)+kron(I4,h2)+J/4.*(kron(kron(sx,I4),sx)+kron(kron(sy,I4),sy)+kron(kron(sz,I4),sz))
     h=HeisenbergH(nsite=4)
-    config=array([1,1,0,1])
+    config=array([1,1,0,0])
     print 'Testing rmatmul of Hamiltonian'
     res=h.rmatmul(1-2*config)
     vec=res.tovec(scfg)

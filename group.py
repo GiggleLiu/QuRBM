@@ -28,19 +28,45 @@ class RBMGroup(object):
         '''
         pass
 
+    @abstractmethod
+    def ind_apply(self,ind,ig):
+        '''
+        Apply group operation on index, notice that changing config is equivalent to changing indices.
+
+        Parameters:
+            :ind: ndarray, the indices.
+            :ig: int, group index.
+
+        Return:
+            ndarray, new indices.
+        '''
+        pass
+
 class NoGroup(RBMGroup):
     def __init__(self):
         super(NoGroup,self).__init__(1)
 
+    def __str__(self):
+        return 'NoGroup'
+
     def apply(self,config,ig):
         return config
+
+    def ind_apply(self,ind,ig):
+        return ind
 
 class TIGroup(RBMGroup):
     '''
     Group of Translational invariance.
     '''
+    def __str__(self):
+        return 'Translaion Group (%s)'%self.ng
 
     def apply(self,config,ig):
         if ig>=self.ng or ig<=-self.ng:
             raise ValueError()
         return roll(config,ig,axis=-1)
+
+    def ind_apply(self,ind,ig):
+        return ind-ig
+

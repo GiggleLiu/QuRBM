@@ -75,6 +75,7 @@ class VMC(object):
         self.sampling_method=sampling_method
         self.nstat=nstat
         self.nmeasure=nmeasure
+        self._config_histo=[]
 
     def accept(self,pratio,method='metropolis'):
         '''
@@ -123,11 +124,13 @@ class VMC(object):
                 if i>=self.nbath:
                     o=c_sandwich(op,config,state,runtime=self.core.get_runtime())
                     if i%nmeasure==0:ol.append(o)      #correlation problem?
+                self._config_histo.append(config)
             else:
                 self.core.reject(); accept_table.append(0)
                 if i>=self.nbath:
                     o=c_sandwich(op,config,state,runtime=self.core.get_runtime()) if o is None else o
                     if i%nmeasure==0:ol.append(o)      #correlation problem?
+                self._config_histo.append(config)
             if i%nstat==nstat-1 and len(ol)>0:
                 if not isinstance(op,OpQueue):
                     varo=abs(var(ol,axis=0).sum()/len(ol))
