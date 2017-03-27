@@ -26,14 +26,15 @@ def SR(H,rbm,handler,gamma=0.1,niter=200,reg_params=('delta',{})):
             * 'pinv'  -> use pseudo inverse instead.
     '''
     q=OpQueue((PartialW(),H),(lambda a,b:a.conj()[...,newaxis]*a,lambda a,b:b*a.conj()))
+    reg_method,reg_var=reg_params
+    lambda0,b=reg_var.get('lambda0',100),reg_var.get('b',0.9)
     for p in xrange(niter):
-        OPW,OH,OPW2,OPWH=handler.measure(q,rbm)
+        OPW,OH,OPW2,OPWH=handler.measure(q,rbm,tol=lambda0*0.2*b**p)
         S=OPW2-OPW[:,newaxis].conj()*OPW
         F=OPWH-OPW.conj()*OH
         #regularize S matrix to get Sinv.
-        reg_method,reg_var=reg_params
         if reg_method=='delta':
-            lamb=max(reg_var.get('lambda0',100)*reg_var.get('b',0.9)**p,1e-4)
+            lamb=max(lambda0*b**p,1e-4)
             fill_diagonal(S,S.diagonal()+lamb)
             Sinv=inv(S)
         elif reg_method=='pinv':

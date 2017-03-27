@@ -12,82 +12,85 @@ from toymodel import *
 from sr import *
 from mccore_rbm import *
 from vmc import *
-from group import TIGroup
+from group import TIGroup,NoGroup
 
 from test_vmc import analyse_sampling
 
 #random.seed(2)
 
-def test_sr_fake():
-    nsite=6
-    h=HeisenbergH(nsite=nsite)
-    scfg=SpinSpaceConfig([nsite,2])
-    b=0.9
+class SRTest(object):
+    def __init__(self,nsite,periodic):
+        self.nsite,self.periodic=nsite,periodic
+        self.h=HeisenbergH(nsite=nsite,periodic=periodic)
+        self.scfg=SpinSpaceConfig([nsite,2])
+        self.fv=FakeVMC(periodic=periodic)
 
-    #generate a random rbm and the corresponding vector v
-    rbm=random_rbm(nin=nsite,nhid=nsite*2)
+        #vmc config
+        core=RBMCore()
+        self.vmc=VMC(core,nbath=200,nsample=50000,nmeasure=nsite,sampling_method='metropolis')
 
-    fv=FakeVMC()
-    v_true=eigh(fv.get_H(nsite))[1][:,0]
-    el=[]
-    for k in xrange(100):
-        print 'Running %s-th batch.'%k
-        rbm=SR(h,rbm,handler=fv,niter=1,gamma=0.2,reg_params=('delta',{'b':b,'lambda0':100*b**(5*k)}))
-        v=rbm.tovec(scfg)
-        v=v/norm(v)
-        err=1-abs(v.conj().dot(v_true))
-        print 'Error = %.4f%%'%(err*100)
-        el.append(err)
-    pdb.set_trace()
-    savetxt('err0.dat',el)
-    assert_(err<0.01)
+    def test_sr_fake(self):
+        b=0.9
+        el=[]
+        H=self.fv.get_H(self.nsite)
+        e_true,v_true=eigh(H)
+        #generate a random rbm and the corresponding vector v
+        self.rbm=random_rbm(nin=self.nsite,nhid=self.nsite,group=TIGroup(self.nsite) if self.periodic else NoGroup())
+        for k in xrange(100):
+            print 'Running %s-th batch.'%k
+            rbm=SR(self.h,self.rbm,handler=self.fv,niter=1,gamma=0.2,reg_params=('delta',{'b':b,'lambda0':100*b**(5*k)}))
+            v=rbm.tovec(self.scfg)
+            v=v/norm(v)
+            #err=1-abs(v.conj().dot(v_true[:,0]))
+            ei=v.conj().dot(H).dot(v)
+            err=abs(e_true[0]-ei)/(abs(e_true[0])+abs(ei))
+            print 'Error = %.4f%%'%(err*100)
+            el.append(err)
+        savetxt('data/err0-%s%s.dat'%(self.nsite,'p' if self.periodic else 'o'),el)
+        assert_(err<0.01)
 
-def test_sr():
-    nsite=5
-    h=HeisenbergH(nsite=nsite)
-    scfg=SpinSpaceConfig([nsite,2])
-    b=0.8
+    def test_sr(self):
+        b=0.85
+        el=[]
+        H=self.fv.get_H(self.nsite)
+        e_true,v_true=eigh(H)
+        #generate a random rbm and the corresponding vector v
+        self.rbm=random_rbm(nin=self.nsite,nhid=self.nsite,group=TIGroup(self.nsite) if self.periodic else NoGroup())
+        for k in xrange(100):
+            print 'Running %s-th batch.'%k
+            rbm=SR(self.h,self.rbm,handler=self.vmc,niter=1,gamma=0.2,reg_params=('delta',{'lambda0':100*b**(5*k),'b':b}))
+            v=rbm.tovec(self.scfg); v=v/norm(v)
+            #err=1-abs(v.conj().dot(v_true[:,0]))
+            ei=v.conj().dot(H).dot(v)
+            err=abs(e_true[0]-ei)/(abs(e_true[0])+abs(ei))
+            print 'Error = %.4f%%'%(err*100)
+            el.append(err)
+        savetxt('data/err-%s%s.dat'%(self.nsite,'p' if self.periodic else 'o'),el)
+        assert_(err<0.05)
 
-    #generate a random rbm and the corresponding vector v
-    #rbm=random_rbm(nin=nsite,nhid=nsite)
-    rbm=random_rbm(nin=nsite,nhid=nsite,group=TIGroup(nsite))
-
-    #vmc config
-    core=RBMCore()
-    vmc=VMC(core,nbath=200,nsample=10000,nmeasure=4,sampling_method='metropolis')
-
-    fv=FakeVMC()
-    v_true=eigh(fv.get_H(nsite))[1][:,0]
-
-    el=[]
-    for k in xrange(100):
-        print 'Running %s-th batch.'%k
-        rbm=SR(h,rbm,handler=vmc,niter=1,gamma=0.2,reg_params=('delta',{'lambda0':100*b**(5*k),'b':b}))
-        v=rbm.tovec(scfg); v=v/norm(v)
-        err=1-abs(v.conj().dot(v_true))
-        print 'Error = %.4f%%'%(err*100)
-        el.append(err)
-    savetxt('err.dat',el)
-    assert_(err<0.05)
-
-def show_err_sr():
+def show_err_sr(nsite):
     from matplotlib.pyplot import plot,ion
     ion()
     fig=figure(figsize=(5,4))
-    el=loadtxt('err.dat')
-    el0=loadtxt('err0.dat')
-    plot(el0,lw=2)
-    plot(el,lw=2)
+    for b,c in zip(['p','o'],['gray','k']):
+        f='data/err-%s%s.dat'%(nsite,b)
+        f0='data/err0-%s%s.dat'%(nsite,b)
+        el=loadtxt(f)
+        el0=loadtxt(f0)
+        plot(el0,lw=2,color=c)
+        plot(el,lw=2,color=c,ls='--')
     xlabel('iteration',fontsize=16)
-    ylabel(r'$1-\|\left\langle\psi|\tilde{\psi}\right\rangle\|_2$',fontsize=16)
+    ylabel(r'$Err=\frac{|E-E_0|}{|E|+|E_0|}$',fontsize=16)
+    #ylabel(r'$1-\|\left\langle\psi|\tilde{\psi}\right\rangle\|_2$',fontsize=16)
     ylim(1e-8,1)
     yscale('log')
-    legend(['Exact','VMC'])
+    legend(['Exact/Periodic','VMC/Periodic','Exact/Open','VMC/Open'],loc=3)
     tight_layout()
     pdb.set_trace()
-    savefig('err.pdf')
+    savefig('data/err-%s.pdf'%nsite)
 
 if __name__=='__main__':
-    test_sr_fake()
-    test_sr()
-    #show_err_sr()
+    t=SRTest(nsite=4,periodic=False)
+    #t.test_sr_fake()
+    #t.test_sr()
+    show_err_sr(nsite=5)

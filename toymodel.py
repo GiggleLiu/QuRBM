@@ -18,9 +18,10 @@ class HeisenbergH(LinOp):
     '''
     opt_lmul=False
 
-    def __init__(self,nsite,J=1):
+    def __init__(self,nsite,J=1,periodic=True):
         self.J=J
         self.nsite=nsite
+        self.periodic=periodic
 
     def rmatmul(self,target):
         if isinstance(target,ndarray):  #series of {1,-1}
@@ -31,10 +32,12 @@ class HeisenbergH(LinOp):
         wl,configs=[],[]
         for w,c in zip(ws,cs):
             #J(SzSz) terms.
-            wl.append(self.J/4.*w*(roll(c,-1)*c).sum(axis=-1))
+            nn_par=roll(c,-1)*c
+            if not self.periodic: nn_par=nn_par[:-1]
+            wl.append(self.J/4.*w*(nn_par).sum(axis=-1))
             configs.append(c)
 
-            for i in xrange(nsite):
+            for i in xrange(nsite if self.periodic else nsite-1):
                 #J/2(S+S- + S-S+) terms
                 j=(i+1)%nsite
                 if c[i]^c[j]:
@@ -46,6 +49,9 @@ class HeisenbergH(LinOp):
 
 class FakeVMC(object):
     '''The Fake VMC program'''
+    def __init__(self,periodic=True):
+        self.periodic=periodic
+
     def get_H(self,nsite):
         J=1.
         scfg=SpinSpaceConfig([nsite,2])
@@ -55,10 +61,11 @@ class FakeVMC(object):
             H=H+kron(kron(eye(2**i),h2),eye(2**(nsite-2-i)))
 
         #impose periodic boundary
-        H=H+J/4.*(kron(kron(sx,eye(2**(nsite-2))),sx)+kron(kron(sy,eye(2**(nsite-2))),sy)+kron(kron(sz,eye(2**(nsite-2))),sz))
+        if self.periodic:
+            H=H+J/4.*(kron(kron(sx,eye(2**(nsite-2))),sx)+kron(kron(sy,eye(2**(nsite-2))),sy)+kron(kron(sz,eye(2**(nsite-2))),sz))
         return H
 
-    def measure(self,op,state,initial_config=None):
+    def measure(self,op,state,initial_config=None,**kwargs):
         '''Measure an operator through detailed calculation.'''
         nsite=state.nin
         H=self.get_H(nsite)
