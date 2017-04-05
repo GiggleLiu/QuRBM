@@ -11,15 +11,15 @@ from group import *
 
 class RBMTest(object):
     def __init__(self):
-        a=[0.1,0.2]
-        b=[0.1,0.2,0.3]
-        b2=[-0.1,-0.2j,-0.3]
+        a=[0.1j,0.2]
+        b=[0.1j,0.2,0.3]
+        b2=[-0.1j,0.2,-0.3]
         W=[[0.1,-0.1,0.1],[-0.1j,0.1,0.1j]]
         self.rbm=RBM(a,b,W)
 
         #translational invariant group
         tig=TIGroup(ng=2)
-        self.rbm_t=RBM(a,concatenate([b,b2]),W,group=tig)
+        self.rbm_t=RBM(a,b2,W,group=tig)
 
         #get vec in the brute force way.
         self.vec=[]
@@ -47,7 +47,7 @@ class RBMTest(object):
             for j in xrange(scfg2.hndim):
                 config2=scfg2.ind2config(j)
                 h=1-2*config2
-                vi+=exp((s*a).sum()+(h*concatenate([b,b2])).sum()+s.dot(W).dot(h[:3])+s[::-1].dot(W).dot(h[3:]))
+                vi+=exp((s*a).sum()+(h*concatenate([b2,b2])).sum()+s.dot(W).dot(h[:3])+s[::-1].dot(W).dot(h[3:]))
             self.vec2.append(vi)
         self.vec2=array(self.vec2)
 
@@ -62,6 +62,13 @@ class RBMTest(object):
         vect=self.rbm_t.tovec(scfg)
         assert_allclose(vect,self.vec2,atol=1e-8)
 
+def test_randomrbm():
+    nsite=6
+    scfg=SpinSpaceConfig([nsite,2])
+    rbm=random_rbm(nin=nsite,nhid=2)
+    print rbm.tovec(scfg)
+
 if __name__=='__main__':
+    test_randomrbm()
     rt=RBMTest()
     rt.test_tovec()

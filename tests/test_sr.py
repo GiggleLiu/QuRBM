@@ -1,3 +1,6 @@
+'''
+Test Stochastic Reconfiguration with minimal model.
+'''
 from numpy import *
 from numpy.testing import dec,assert_,assert_raises,assert_almost_equal,assert_allclose
 from scipy.linalg import kron,eigh,norm
@@ -16,23 +19,28 @@ from group import TIGroup,NoGroup
 
 from test_vmc import analyse_sampling
 
-#random.seed(2)
+random.seed(2)
 
 class SRTest(object):
-    def __init__(self,nsite,periodic):
+    def __init__(self,nsite,periodic,model='AFH'):
         self.nsite,self.periodic=nsite,periodic
-        self.h=HeisenbergH(nsite=nsite,periodic=periodic)
+        if model=='AFH':
+            self.h=HeisenbergH(nsite=nsite,J=4.,Jz=4.,periodic=periodic)
+        elif model=='TFI':
+            self.h=TFI(nsite=nsite,Jz=-4.,h=-1.,periodic=periodic)
+        else:
+            raise ValueError()
         self.scfg=SpinSpaceConfig([nsite,2])
-        self.fv=FakeVMC(periodic=periodic)
+        self.fv=FakeVMC(self.h)
 
         #vmc config
-        core=RBMCore()
+        core=RBMCore(initial_config=[-1,1]*(nsite/2)+[1]*(nsite%2))
         self.vmc=VMC(core,nbath=200,nsample=50000,nmeasure=nsite,sampling_method='metropolis')
 
     def test_sr_fake(self):
         b=0.9
         el=[]
-        H=self.fv.get_H(self.nsite)
+        H=self.fv.get_H()
         e_true,v_true=eigh(H)
         #generate a random rbm and the corresponding vector v
         self.rbm=random_rbm(nin=self.nsite,nhid=self.nsite,group=TIGroup(self.nsite) if self.periodic else NoGroup())
@@ -52,13 +60,13 @@ class SRTest(object):
     def test_sr(self):
         b=0.85
         el=[]
-        H=self.fv.get_H(self.nsite)
+        H=self.fv.get_H()
         e_true,v_true=eigh(H)
         #generate a random rbm and the corresponding vector v
         self.rbm=random_rbm(nin=self.nsite,nhid=self.nsite,group=TIGroup(self.nsite) if self.periodic else NoGroup())
         for k in xrange(100):
             print 'Running %s-th batch.'%k
-            rbm=SR(self.h,self.rbm,handler=self.vmc,niter=1,gamma=0.2,reg_params=('delta',{'lambda0':100*b**(5*k),'b':b}))
+            rbm,info=SR(self.h,self.rbm,handler=self.vmc,niter=1,gamma=0.2,reg_params=('delta',{'lambda0':100*b**(5*k),'b':b}))
             v=rbm.tovec(self.scfg); v=v/norm(v)
             #err=1-abs(v.conj().dot(v_true[:,0]))
             ei=v.conj().dot(H).dot(v)
@@ -90,7 +98,7 @@ def show_err_sr(nsite):
     savefig('data/err-%s.pdf'%nsite)
 
 if __name__=='__main__':
-    t=SRTest(nsite=4,periodic=False)
+    t=SRTest(nsite=5,periodic=True,model='TFI')
     #t.test_sr_fake()
-    #t.test_sr()
-    show_err_sr(nsite=5)
+    t.test_sr()
+    #show_err_sr(nsite=4)

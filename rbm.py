@@ -27,7 +27,7 @@ class RBM(object):
     '''
     def __init__(self,a,b,W,group=NoGroup()):
         self.a,self.b,self.W,self.group=asarray(a),asarray(b),asarray(W),group
-        if not len(self.a)*len(self.b)==prod(self.W.shape)*group.ng:raise ValueError()
+        if not len(self.a)*len(self.b)==prod(self.W.shape):raise ValueError()
 
     def __rmul__(self,target):
         if isinstance(target,SparseState):
@@ -53,7 +53,7 @@ class RBM(object):
         return '<RBM> in[%s] hid[%s x %s]'%(self.nin,self.group.ng,self.W.shape[1])
 
     @property
-    def nhid(self): return len(self.b)
+    def nhid(self): return len(self.b)*self.group.ng
 
     @property
     def nin(self): return len(self.a)
@@ -72,7 +72,7 @@ class RBM(object):
         hl=[]
         for ig in xrange(self.group.ng):
             vi=self.group.apply(v,ig)
-            hi=vi.dot(self.W)+self.b[ig*nj:(ig+1)*nj]
+            hi=vi.dot(self.W)+self.b
             hl.append(hi)
         return concatenate(hl,axis=-1)
 
@@ -115,13 +115,15 @@ class RBM(object):
         '''
         group=self.group
         if theta is None: theta=self.feed_input(config)
-        return exp(config.dot(self.a))*prod(2*cosh(theta),axis=-1)
+        return exp(asarray(config).dot(self.a))*prod(2*cosh(theta),axis=-1)
 
 def random_rbm(nin,nhid,group=NoGroup()):
     '''Get a random Restricted Boltzmann Machine'''
     if nhid%group.ng!=0: raise ValueError()
-    data=(random.random(nin+nhid+nin*nhid/group.ng)-0.5)/2**nhid+1j*random.random(nin+nhid+nin*nhid/group.ng)-0.5j
+    nb=nhid/group.ng
+    #data=(random.random(nin+nhid+nin*nhid/group.ng)-0.5)/2**nhid+1j*random.random(nin+nhid+nin*nhid/group.ng)-0.5j
+    data=(random.random(nin+nb+nin*nb)-0.5)+1j*random.random(nin+nb+nin*nb)-0.5j
     a=data[:nin]
-    b=data[nin:nin+nhid]
-    W=data[nin+nhid:].reshape([nin,nhid/group.ng])
+    b=data[nin:nin+nb]
+    W=data[nin+nb:].reshape([nin,nb])
     return RBM(a,b,W,group=group)

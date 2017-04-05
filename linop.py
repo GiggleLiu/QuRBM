@@ -8,28 +8,18 @@ class LinOp(object):
     '''A new linear operator prototype.'''
     __metaclass__ = ABCMeta
     
-    opt_lmul=False   #lmatmul is prefered.
-
-    def rmatmul(self,target):
+    @abstractmethod
+    def _sandwich(self,config,state,runtime,**kwargs):
         '''
-        matmul a vector at the right side.
-        
+        Exceptation value like <config|self|state>.
+
         Parameters:
-            :target: 1darray/<SparseState>, the input state.
+            :config: ndarray, configuration(s).
+            :state: <RBM>,
+            :runtime: dict, runtime variables to boost caculation.
 
         Return:
-            <SparseState>, the output state.
-        '''
-        pass
-
-    def lmatmul(self,target):
-        '''matmul a vector at the left side.
-        
-        Parameters:
-            :target: 1darray/<SparseState>, the input state.
-
-        Return:
-            <SparseState>, the output state.
+            ndarray, expectation value of this operator.
         '''
         pass
 
@@ -41,7 +31,7 @@ class PartialW(LinOp):
         #get partial ai
         partialS.append(config)
         #get partial bj
-        partialS.append(tanh(theta))
+        partialS.append(tanh(theta).reshape([state.group.ng,len(state.b)]).sum(axis=0))
         #get partial Wij
         config_g=array([state.group.apply(config,ig) for ig in xrange(state.group.ng)])
         partialS.append(sum(config_g[:,:,newaxis]*tanh(theta).reshape([state.group.ng,1,state.W.shape[1]]),axis=0).ravel())
@@ -67,23 +57,17 @@ class OpQueue(LinOp):
             vald.append(op(*valb))
         return valb+vald
 
-#class HPartialWc(LinOp):
-#    def __init__(self,H):
-#        self.H=H
-#
-#    def _sandwich(self,config,runtime,**kwargs):
-#        if not (runtime.haskey('partialW_loc') and runtime.haskey('H_loc')):
-#            raise ValueError('We need runtime partialW_loc and H_loc to calculate')
-#        theta=runtime['theta']
+class sx(LinOp):
+    '''sigma_x'''
+    def __init__(self,i):
+        self.i=i
 
-#def sandwich(op,ket,state,runtime={}):
-#    '''Evaluate <ket|op|bra>'''
-#    if hasattr(op,'_sandwich'):
-#        return op._sandwich(ket,runtime=runtime,state=state)
-#    if op.opt_lmul:
-#        ket*op.lmatmul(bra)/(ket*bra)
-#    else:
-#        op.rmatmul(ket)*bra/(ket*bra)
+    def _sandwich(self,config,state,runtime=None):
+        nc=copy(config)
+        nc[self.i]*=-1
+        theta=runtime.get('theta')
+        return state.get_weight(nc,theta=theta)/state.get_weight(config,theta=theta)
+        
 
 def c_sandwich(op,config,state,runtime={}):
     '''
@@ -97,9 +81,4 @@ def c_sandwich(op,config,state,runtime={}):
     Return:
         number,
     '''
-    if hasattr(op,'_sandwich'):
-        return op._sandwich(config,runtime=runtime,state=state)
-    if op.opt_lmul:
-        return ket*op.lmatmul(state)/state.get_weight(config,theta=runtime.get('theta'))
-    else:
-        return op.rmatmul(config)*state/state.get_weight(config,theta=runtime.get('theta'))
+    return op._sandwich(config,runtime=runtime,state=state)

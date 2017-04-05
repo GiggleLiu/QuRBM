@@ -3,7 +3,7 @@ Stochestic Reconfiguration.
 '''
 
 from numpy import *
-from scipy.linalg import pinv,inv
+from scipy.linalg import pinv,inv,norm
 import pdb
 
 from linop import PartialW,OpQueue
@@ -28,8 +28,13 @@ def SR(H,rbm,handler,gamma=0.1,niter=200,reg_params=('delta',{})):
     q=OpQueue((PartialW(),H),(lambda a,b:a.conj()[...,newaxis]*a,lambda a,b:b*a.conj()))
     reg_method,reg_var=reg_params
     lambda0,b=reg_var.get('lambda0',100),reg_var.get('b',0.9)
+    nb=rbm.nhid/rbm.group.ng
+    info={}
+    info['opl']=[]
     for p in xrange(niter):
-        OPW,OH,OPW2,OPWH=handler.measure(q,rbm,tol=lambda0*0.2*b**p)
+        print '#'*20+' ITERATION %s '%p+'#'*20
+        ops=handler.measure(q,rbm,tol=lambda0*0.2*b**p); info['opl'].append(ops)
+        OPW,OH,OPW2,OPWH=ops
         S=OPW2-OPW[:,newaxis].conj()*OPW
         F=OPWH-OPW.conj()*OH
         #regularize S matrix to get Sinv.
@@ -37,6 +42,7 @@ def SR(H,rbm,handler,gamma=0.1,niter=200,reg_params=('delta',{})):
             lamb=max(lambda0*b**p,1e-4)
             fill_diagonal(S,S.diagonal()+lamb)
             Sinv=inv(S)
+            #Sinv/=norm(Sinv)
         elif reg_method=='pinv':
             Sinv=pinv(S)
         else:
@@ -44,6 +50,6 @@ def SR(H,rbm,handler,gamma=0.1,niter=200,reg_params=('delta',{})):
         g=gamma if not hasattr(gamma,'__call__') else gamma(p)
         ds=g*Sinv.dot(F)
         rbm.a-=ds[:rbm.nin]
-        rbm.b-=ds[rbm.nin:rbm.nin+rbm.nhid]
-        rbm.W-=ds[rbm.nin+rbm.nhid:].reshape(rbm.W.shape)
-    return rbm
+        rbm.b-=ds[rbm.nin:rbm.nin+nb]
+        rbm.W-=ds[rbm.nin+nb:].reshape(rbm.W.shape)
+    return rbm,info

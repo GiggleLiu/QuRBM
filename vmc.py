@@ -75,7 +75,6 @@ class VMC(object):
         self.sampling_method=sampling_method
         self.nstat=nstat
         self.nmeasure=nmeasure
-        #self._config_histo=[]
 
     def accept(self,pratio,method='metropolis'):
         '''
@@ -95,7 +94,7 @@ class VMC(object):
             A=pratio/(1+pratio)
         return random.random()<A
 
-    def measure(self,op,state,tol=0,initial_config=None):
+    def measure(self,op,state,tol=0):
         '''
         Measure an operator.
 
@@ -103,46 +102,49 @@ class VMC(object):
             :op: <LinOp>, a linear operator instance.
             :state: <RBM>/..., a state ansaz
             :tol: float, tolerence.
-            :initial_config: None/1darray, the initial configuration used in sampling.
 
         Return:
             number,
         '''
         nmeasure,nstat=self.nmeasure,self.nstat
+        bins=[]
         ol=[]  #local operator values
         o=None
         self.core.set_state(state)
-        config=initial_config if initial_config is not None else self.core.random_config()
-        accept_table=[]
+        config=self.core.initial_config
+        n_accepted=0
 
         for i in xrange(self.nbath+self.nsample):
             #generate new config
             new_config,pratio=self.core.fire(config)
             if self.accept(pratio):
-                self.core.confirm(); accept_table.append(1)
+                self.core.confirm(); n_accepted+=1
                 config=new_config
-                if i>=self.nbath:
-                    o=c_sandwich(op,config,state,runtime=self.core.get_runtime())
-                    if i%nmeasure==0:ol.append(o)      #correlation problem?
-                #self._config_histo.append(config)
+                o=None
             else:
-                self.core.reject(); accept_table.append(0)
-                if i>=self.nbath:
+                self.core.reject()
+            if i>=self.nbath:
+                if i%nmeasure==0:
                     o=c_sandwich(op,config,state,runtime=self.core.get_runtime()) if o is None else o
-                    if i%nmeasure==0:ol.append(o)      #correlation problem?
-                #self._config_histo.append(config)
-            if i%nstat==nstat-1 and len(ol)>0:
-                if not isinstance(op,OpQueue):
-                    varo=var(ol,axis=0).mean()
-                else:
-                    varo=array([var(oi,axis=0).mean() for oi in zip(*ol)])
-                stdo=sqrt(varo/len(ol))
-                print '%-10s Accept rate: %.3f, Std Err: %.5f'%(i+1,mean(accept_table),sqrt(sum(stdo**2)))
-                accept_table=[]
+                    ol.append(o)      #correlation problem?
+            if i%nstat==nstat-1:
+                if len(ol)>0:
+                    if not isinstance(op,OpQueue):
+                        bins.append(mean(ol))
+                        var_bin=var(bins,axis=0).mean()
+                    else:
+                        bins.append([mean(oi) for oi in ol])
+                        var_bin=array([var(bi,axis=0).mean() for bi in zip(*bins)])
+                    std_bin=sqrt(var_bin/len(bins))
+                    print '%-10s Accept rate: %.3f, Std Err: %.5f'%(i+1,n_accepted*1./nstat,sqrt(sum(std_bin**2)))
 
-                #accurate results obtained.
-                if len(ol)>100 and all(stdo<tol):
-                    break
+                    #accurate results obtained.
+                    if len(bins)>100 and all(std_bin<tol):
+                        break
+                    ol=[]  #local operator values
+                else:
+                    print '%-10s Accept rate: %.3f'%(i+1,n_accepted*1./nstat)
+                n_accepted=0
 
         if not isinstance(op,OpQueue):
             return mean(ol,axis=0)

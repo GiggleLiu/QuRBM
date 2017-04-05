@@ -20,10 +20,12 @@ class TestLinop(object):
         #construct true H
         I2,I4=eye(2),eye(4)
         h2=J/4.*(kron(sx,sx)+kron(sz,sz)+kron(sy,sy))
-        self.H=kron(h2,I4)+kron(kron(I2,h2),I2)+kron(I4,h2)+J/4.*(kron(kron(sz,I4),sz)+kron(kron(sy,I4),sy)+kron(kron(sx,I4),sx))
 
         #construct operator H act on config
-        self.h=HeisenbergH(nsite=4)
+        self.h1=TFI(nsite=4)
+        self.h2=HeisenbergH(nsite=4)
+        self.toy1,self.toy2=FakeVMC(self.h1),FakeVMC(self.h2)
+        self.H1,self.H2=self.toy1.get_H(),self.toy2.get_H()
         self.pW=PartialW()
 
         #generate a random rbm and the corresponding vector v
@@ -34,19 +36,22 @@ class TestLinop(object):
         self.v_g=self.rbm_g.tovec(self.scfg)
 
     def test_sandwichh(self):
-        print 'Testing sandwich H.'
-        config=random.randint(0,2,4)
-        ket=zeros(self.scfg.hndim); ket[self.scfg.config2ind(config)]=1
+        for h,H in [(self.h1,self.H1),(self.h2,self.H2)]:
+            print 'Testing sandwich %s.'%h.__class__
+            config=random.randint(0,2,4)
+            ket=zeros(self.scfg.hndim); ket[self.scfg.config2ind(config)]=1
 
-        H,v,v_g=self.H,self.v,self.v_g
-        O_true=ket.conj().dot(H).dot(v)/sum(ket.conj()*v)
-        O_s=c_sandwich(self.h,1-config*2,self.rbm)
+            H,v,v_g=self.H2,self.v,self.v_g
+            print 'Testing the non-group version'
+            O_true=ket.conj().dot(H).dot(v)/sum(ket.conj()*v)
+            O_s=c_sandwich(self.h2,1-config*2,self.rbm)
+            assert_almost_equal(O_s,O_true,decimal=8)
 
-        O_sg=c_sandwich(self.h,1-config*2,self.rbm_g)
-        O_trueg=ket.conj().dot(H).dot(v_g)/sum(ket.conj()*v_g)
+            print 'Testing the group version'
+            O_sg=c_sandwich(self.h2,1-config*2,self.rbm_g)
+            O_trueg=ket.conj().dot(H).dot(v_g)/sum(ket.conj()*v_g)
 
-        assert_almost_equal(O_s,O_true,decimal=8)
-        assert_almost_equal(O_sg,O_trueg,decimal=8)
+            assert_almost_equal(O_sg,O_trueg,decimal=8)
 
     def test_sandwichpw(self):
         print 'Testing sandwich PartialW.'

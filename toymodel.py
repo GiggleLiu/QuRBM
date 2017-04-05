@@ -8,7 +8,46 @@ from tba.hgen import SpinSpaceConfig,sx,sy,sz
 from linop import *
 from sstate import SparseState
 
-__all__=['HeisenbergH','FakeVMC']
+__all__=['TFI','HeisenbergH','FakeVMC']
+
+class TFI(LinOp):
+    '''
+    Transverse Field Ising Hamiltonian
+
+    H = J S_z*S_z' + h S_x
+    '''
+    opt_lmul=False
+
+    def __init__(self,nsite,Jz=-1,h=0,periodic=True):
+        self.Jz,self.h=Jz,h
+        self.nsite=nsite
+        self.periodic=periodic
+
+    def _rmatmul(self,config):
+        if isinstance(config,ndarray):  #series of {1,-1}
+            ws,cs=[1],[config]
+        else:
+            ws,cs=config.w,config.configs
+        nsite=len(cs[0])
+        wl,configs=[],[]
+        for w,c in zip(ws,cs):
+            #J(SzSz) terms.
+            nn_par=roll(c,-1)*c
+            if not self.periodic: nn_par=nn_par[:-1]
+            wl.append(self.Jz/4.*w*(nn_par).sum(axis=-1))
+            configs.append(c)
+
+            for i in xrange(nsite):
+                #h*Sx terms
+                nc=copy(c)
+                nc[i]*=-1
+                wl.append(self.h/2.*w)
+                configs.append(nc)
+        return SparseState(wl,configs)
+
+    def _sandwich(self,config,state,runtime,**kwargs):
+        return self._rmatmul(config)*state/state.get_weight(config,theta=runtime.get('theta'))
+
 
 class HeisenbergH(LinOp):
     '''
@@ -18,23 +57,24 @@ class HeisenbergH(LinOp):
     '''
     opt_lmul=False
 
-    def __init__(self,nsite,J=1,periodic=True):
+    def __init__(self,nsite,J=1.,Jz=None,periodic=True):
         self.J=J
+        self.Jz=J if Jz is None else Jz
         self.nsite=nsite
         self.periodic=periodic
 
-    def rmatmul(self,target):
-        if isinstance(target,ndarray):  #series of {1,-1}
-            ws,cs=[1],[target]
+    def _rmatmul(self,config):
+        if hasattr(config,'__iter__'):  #series of {1,-1}
+            ws,cs=[1],[asarray(config)]
         else:
-            ws,cs=target.w,target.configs
+            ws,cs=config.w,config.configs
         nsite=len(cs[0])
         wl,configs=[],[]
         for w,c in zip(ws,cs):
             #J(SzSz) terms.
             nn_par=roll(c,-1)*c
             if not self.periodic: nn_par=nn_par[:-1]
-            wl.append(self.J/4.*w*(nn_par).sum(axis=-1))
+            wl.append(self.Jz/4.*w*(nn_par).sum(axis=-1))
             configs.append(c)
 
             for i in xrange(nsite if self.periodic else nsite-1):
@@ -47,28 +87,45 @@ class HeisenbergH(LinOp):
                     configs.append(nc)
         return SparseState(wl,configs)
 
+    def _sandwich(self,config,state,runtime,**kwargs):
+        return self._rmatmul(config)*state/state.get_weight(config,theta=runtime.get('theta'))
+
 class FakeVMC(object):
     '''The Fake VMC program'''
-    def __init__(self,periodic=True):
-        self.periodic=periodic
+    def __init__(self,h):
+        self.h=h
 
-    def get_H(self,nsite):
-        J=1.
+    def get_H(self):
+        '''Get the target Hamiltonian Matrix.'''
+        nsite,periodic=self.h.nsite,self.h.periodic
         scfg=SpinSpaceConfig([nsite,2])
-        h2=J/4.*(kron(sx,sx)+kron(sz,sz)+kron(sy,sy))
-        H=0
-        for i in xrange(nsite-1):
-            H=H+kron(kron(eye(2**i),h2),eye(2**(nsite-2-i)))
+        if isinstance(self.h,TFI):
+            J,h=self.h.Jz,self.h.h
+            h2=J/4.*kron(sz,sz)
+            H=0
+            for i in xrange(nsite):
+                if i!=nsite-1:
+                    H=H+kron(kron(eye(2**i),h2),eye(2**(nsite-2-i)))
+                elif periodic: #periodic boundary
+                    H=H+J/4.*kron(kron(sz,eye(2**(nsite-2))),sz)
+                H=H+h/2.*kron(kron(eye(2**i),sx),eye(2**(nsite-i-1)))
+            return H
+        elif isinstance(self.h,HeisenbergH):
+            J,Jz=self.h.J,self.h.Jz
+            h2=J/4.*(kron(sx,sx)+kron(sz,sz))+Jz/4.*kron(sy,sy)
+            H=0
+            for i in xrange(nsite-1):
+                H=H+kron(kron(eye(2**i),h2),eye(2**(nsite-2-i)))
 
-        #impose periodic boundary
-        if self.periodic:
-            H=H+J/4.*(kron(kron(sx,eye(2**(nsite-2))),sx)+kron(kron(sy,eye(2**(nsite-2))),sy)+kron(kron(sz,eye(2**(nsite-2))),sz))
-        return H
+            #impose periodic boundary
+            if periodic:
+                H=H+J/4.*(kron(kron(sx,eye(2**(nsite-2))),sx)+kron(kron(sy,eye(2**(nsite-2))),sy)+kron(kron(sz,eye(2**(nsite-2))),sz))
+            return H
 
     def measure(self,op,state,initial_config=None,**kwargs):
         '''Measure an operator through detailed calculation.'''
         nsite=state.nin
-        H=self.get_H(nsite)
+        H=self.get_H()
         scfg=SpinSpaceConfig([nsite,2])
         if isinstance(op,HeisenbergH):
             op=H
@@ -79,7 +136,7 @@ class FakeVMC(object):
             pS=[]
             pS.append(configs)
             theta=state.feed_input(configs)
-            pS.append(tanh(theta))
+            pS.append(tanh(theta).reshape([len(configs),state.group.ng,len(state.b)]).sum(axis=1))
             configs_g=array([state.group.apply(configs,ig) for ig in xrange(state.group.ng)]).swapaxes(0,1)
             pS.append(sum(configs_g[:,:,:,newaxis]*tanh(theta).reshape([scfg.hndim,state.group.ng,1,state.W.shape[1]]),axis=1).reshape([configs.shape[0],-1]))
             pS=concatenate(pS,axis=-1)
@@ -96,7 +153,7 @@ class FakeVMC(object):
             pS=[]
             pS.append(configs)
             theta=state.feed_input(configs)
-            pS.append(tanh(theta))
+            pS.append(tanh(theta).reshape([len(configs),state.group.ng,len(state.b)]).sum(axis=1))
             configs_g=array([state.group.apply(configs,ig) for ig in xrange(state.group.ng)]).swapaxes(0,1)
             pS.append(sum(configs_g[:,:,:,newaxis]*tanh(theta).reshape([scfg.hndim,state.group.ng,1,state.W.shape[1]]),axis=1).reshape([configs.shape[0],-1]))
             pS=concatenate(pS,axis=-1)

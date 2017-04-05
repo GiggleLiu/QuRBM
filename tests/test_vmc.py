@@ -36,7 +36,7 @@ class VMCTest(object):
 
         #generate a rbm and the corresponding vector v
         self.rbm=RBM(a=[0.1,0.2j,0.3,-0.5],b=[-0.1,0.2,0.,-0.5j],W=kron(sx,sx)+kron(sy,sy))
-        self.rbm_g=RBM(a=[0.1,0.2j,0.3,-0.5],b=[-0.1,0.2,0.2,-0.5j],\
+        self.rbm_g=RBM(a=[0.1,0.2j,0.3,-0.5],b=[-0.5j],\
                 W=reshape([0.3,-0.2,0.4j,0.1],[self.nsite,1]),group=TIGroup(self.nsite))
 
         #vmc config
@@ -44,7 +44,7 @@ class VMCTest(object):
         self.vmc=VMC(core,nbath=100,nsample=50000,nmeasure=self.nsite,sampling_method='metropolis')
 
         #fake vmc
-        self.fv=FakeVMC()
+        self.fv=FakeVMC(self.h)
 
     def test_measureh(self):
         print 'VMC measurements on HeisenbergH.'
