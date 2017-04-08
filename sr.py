@@ -39,8 +39,9 @@ def SR(H,rbm,handler,gamma=0.1,niter=200,reg_params=('delta',{})):
         F=OPWH-OPW.conj()*OH
         #regularize S matrix to get Sinv.
         if reg_method=='delta':
-            lamb=max(lambda0*b**p,1e-4)
+            lamb=1e-4 #max(lambda0*b**p,1e-4)
             fill_diagonal(S,S.diagonal()+lamb)
+            #fill_diagonal(S,S.diagonal()*(1+lamb))
             Sinv=inv(S)
             #Sinv/=norm(Sinv)
         elif reg_method=='pinv':

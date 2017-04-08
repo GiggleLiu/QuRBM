@@ -25,8 +25,10 @@ class LinOp(object):
 
 class PartialW(LinOp):
     '''Partial weight operator.'''
-    def _sandwich(self,config,state,runtime,**kwargs):
-        theta=runtime['theta']
+    def _sandwich(self,cgen,**kwargs):
+        config=cgen.config
+        theta=cgen.theta
+        state=cgen.state
         partialS=[]
         #get partial ai
         partialS.append(config)
@@ -49,6 +51,10 @@ class OpQueue(LinOp):
     def __init__(self,op_base,op_derive):
         self.op_base,self.op_derive=op_base,op_derive
 
+    @property
+    def nop(self):
+        return len(self.op_base)+len(self.op_derive)
+
     def _sandwich(self,*args,**kwargs):
         valb,vald=[],[]
         for op in self.op_base:
@@ -62,23 +68,23 @@ class sx(LinOp):
     def __init__(self,i):
         self.i=i
 
-    def _sandwich(self,config,state,runtime=None):
+    def _sandwich(self,cgen,**kwargs):
+        config=cgen.config
+        state=cgen.state
         nc=copy(config)
         nc[self.i]*=-1
-        theta=runtime.get('theta')
-        return state.get_weight(nc,theta=theta)/state.get_weight(config,theta=theta)
+        return state.get_weight(nc)/state.get_weight(config,theta=cgen.theta)
         
 
-def c_sandwich(op,config,state,runtime={}):
+def c_sandwich(op,cgen):
     '''
     Evaluate <config|op|state>
 
     Parameters:
         :op: <LinOp>,
         :config: 1darray, single state configuration.
-        :runtime: dict, runtime variables.
 
     Return:
         number,
     '''
-    return op._sandwich(config,runtime=runtime,state=state)
+    return op._sandwich(cgen=cgen)

@@ -90,7 +90,7 @@ class RBM(object):
         nj=self.W.shape[1]
         for ig in xrange(self.group.ng):
             hi=h[...,ig*nj:nj*(ig+1)]
-            vi=self.group.apply(hi.dot(self.W.T)+self.a,-ig)
+            vi=self.group.apply(self.W.dot(hi)+self.a,-ig)
             vl.append(vi)
         return sum(vl,axis=0)
 

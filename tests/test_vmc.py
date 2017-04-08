@@ -11,7 +11,7 @@ from tba.hgen import SpinSpaceConfig,sx,sy,sz
 from vmc import *
 from rbm import *
 from toymodel import *
-from mccore_rbm import *
+from cgen import *
 from linop import *
 from group import TIGroup
 
@@ -32,7 +32,7 @@ class VMCTest(object):
     def __init__(self):
         self.nsite=4
         #construct operator H act on config
-        self.h=HeisenbergH(nsite=self.nsite)
+        self.h=HeisenbergH(nsite=self.nsite,J=1.,periodic=True)
 
         #generate a rbm and the corresponding vector v
         self.rbm=RBM(a=[0.1,0.2j,0.3,-0.5],b=[-0.1,0.2,0.,-0.5j],W=kron(sx,sx)+kron(sy,sy))
@@ -40,8 +40,8 @@ class VMCTest(object):
                 W=reshape([0.3,-0.2,0.4j,0.1],[self.nsite,1]),group=TIGroup(self.nsite))
 
         #vmc config
-        core=RBMCore()
-        self.vmc=VMC(core,nbath=100,nsample=50000,nmeasure=self.nsite,sampling_method='metropolis')
+        cgen=RBMConfigGenerator(nflip=2,initial_config=array([-1,1]*2))
+        self.vmc=VMC(cgen,nbath=2000,nsample=10000*self.nsite,nmeasure=self.nsite,sampling_method='metropolis')
 
         #fake vmc
         self.fv=FakeVMC(self.h)
@@ -50,13 +50,14 @@ class VMCTest(object):
         print 'VMC measurements on HeisenbergH.'
         for rbm in [self.rbm_g,self.rbm]:
             #measurements
-            O_true=self.fv.measure(self.h,rbm)
-            O_vmc=self.vmc.measure(self.h,rbm,tol=1e-4)
+            O_true=self.fv.measure(self.h,rbm)/self.nsite
+            O_vmc=self.vmc.measure(self.h,rbm)/self.nsite
 
-            err=abs(O_vmc-O_true)/abs(O_true)
-            print 'Error = %.4f%%'%(err*100)
+            err=abs(O_vmc-O_true)
+            print 'E/site = %s (%s), Error/site = %s'%(O_vmc,O_true,err)
             #analyse_sampling(self.vmc._config_histo,rbm)
             assert_(err<0.1)
+            pdb.set_trace()
 
     def test_measurepw(self):
         print 'VMC measurements on PartialW.'
@@ -68,7 +69,7 @@ class VMCTest(object):
             O_true=self.fv.measure(pw,rbm)
             O_vmc=self.vmc.measure(pw,rbm)
 
-            err=abs(O_vmc-O_true).sum()/abs(O_true).sum()
+            err=abs(O_vmc-O_true).mean()
             print 'Error = %.4f%%'%(err*100)
             #analyse_sampling(self.vmc._config_histo,rbm)
             assert_(err<0.1)
@@ -79,18 +80,18 @@ class VMCTest(object):
         pw=PartialW()
         q=OpQueue((pw,self.h),(lambda a,b:a.conj()[...,newaxis]*a,lambda a,b:a.conj()*b))
 
-        for rbm in [self.rbm,self.rbm_g]:
+        for rbm in [self.rbm_g,self.rbm]:
             #measurements
             O_trues=self.fv.measure(q,rbm)
             O_vmcs=self.vmc.measure(q,rbm)
 
             for O_true,O_vmc in zip(O_trues,O_vmcs):
-                err=abs(O_vmc-O_true).sum()/abs(O_true).sum()
+                err=abs(O_vmc-O_true).mean()
                 print 'Error = %.4f%%'%(err*100)
                 assert_(err<0.1)
 
 if __name__=='__main__':
     t=VMCTest()
+    t.test_measureh()
     t.test_measureq()
     t.test_measurepw()
-    t.test_measureh()

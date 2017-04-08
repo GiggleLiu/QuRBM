@@ -29,25 +29,23 @@ class TFI(LinOp):
         else:
             ws,cs=config.w,config.configs
         nsite=len(cs[0])
-        wl,configs=[],[]
+        wl,flips=[],[]
         for w,c in zip(ws,cs):
             #J(SzSz) terms.
             nn_par=roll(c,-1)*c
             if not self.periodic: nn_par=nn_par[:-1]
             wl.append(self.Jz/4.*w*(nn_par).sum(axis=-1))
-            configs.append(c)
+            flips.append([])
 
             for i in xrange(nsite):
                 #h*Sx terms
-                nc=copy(c)
-                nc[i]*=-1
                 wl.append(self.h/2.*w)
-                configs.append(nc)
-        return SparseState(wl,configs)
+                flips.append([i])
+        return wl,flips
 
-    def _sandwich(self,config,state,runtime,**kwargs):
-        return self._rmatmul(config)*state/state.get_weight(config,theta=runtime.get('theta'))
-
+    def _sandwich(self,cgen,**kwargs):
+        wl,flips=self._rmatmul(cgen.config)
+        return sum(wl*[cgen.pop(flip)[-1] for flip in flips])
 
 class HeisenbergH(LinOp):
     '''
@@ -69,26 +67,25 @@ class HeisenbergH(LinOp):
         else:
             ws,cs=config.w,config.configs
         nsite=len(cs[0])
-        wl,configs=[],[]
+        wl,flips=[],[]
         for w,c in zip(ws,cs):
             #J(SzSz) terms.
             nn_par=roll(c,-1)*c
             if not self.periodic: nn_par=nn_par[:-1]
             wl.append(self.Jz/4.*w*(nn_par).sum(axis=-1))
-            configs.append(c)
+            flips.append([])
 
             for i in xrange(nsite if self.periodic else nsite-1):
                 #J/2(S+S- + S-S+) terms
                 j=(i+1)%nsite
                 if c[i]^c[j]:
-                    nc=copy(c)
-                    nc[i]*=-1; nc[j]*=-1
                     wl.append(self.J/2.*w)
-                    configs.append(nc)
-        return SparseState(wl,configs)
+                    flips.append([i,j])
+        return wl,flips
 
-    def _sandwich(self,config,state,runtime,**kwargs):
-        return self._rmatmul(config)*state/state.get_weight(config,theta=runtime.get('theta'))
+    def _sandwich(self,cgen,**kwargs):
+        wl,flips=self._rmatmul(cgen.config)
+        return sum(asarray(wl)*[cgen.pop(flip)[-1] for flip in flips])
 
 class FakeVMC(object):
     '''The Fake VMC program'''
@@ -100,26 +97,26 @@ class FakeVMC(object):
         nsite,periodic=self.h.nsite,self.h.periodic
         scfg=SpinSpaceConfig([nsite,2])
         if isinstance(self.h,TFI):
-            J,h=self.h.Jz,self.h.h
-            h2=J/4.*kron(sz,sz)
+            Jz,h=self.h.Jz,self.h.h
+            h2=Jz/4.*kron(sz,sz)
             H=0
             for i in xrange(nsite):
                 if i!=nsite-1:
                     H=H+kron(kron(eye(2**i),h2),eye(2**(nsite-2-i)))
                 elif periodic: #periodic boundary
-                    H=H+J/4.*kron(kron(sz,eye(2**(nsite-2))),sz)
+                    H=H+Jz/4.*kron(kron(sz,eye(2**(nsite-2))),sz)
                 H=H+h/2.*kron(kron(eye(2**i),sx),eye(2**(nsite-i-1)))
             return H
         elif isinstance(self.h,HeisenbergH):
             J,Jz=self.h.J,self.h.Jz
-            h2=J/4.*(kron(sx,sx)+kron(sz,sz))+Jz/4.*kron(sy,sy)
+            h2=J/4.*(kron(sx,sx)+kron(sy,sy))+Jz/4.*kron(sz,sz)
             H=0
             for i in xrange(nsite-1):
                 H=H+kron(kron(eye(2**i),h2),eye(2**(nsite-2-i)))
 
             #impose periodic boundary
             if periodic:
-                H=H+J/4.*(kron(kron(sx,eye(2**(nsite-2))),sx)+kron(kron(sy,eye(2**(nsite-2))),sy)+kron(kron(sz,eye(2**(nsite-2))),sz))
+                H=H+J/4.*(kron(kron(sx,eye(2**(nsite-2))),sx)+kron(kron(sy,eye(2**(nsite-2))),sy))+Jz/4.*(kron(kron(sz,eye(2**(nsite-2))),sz))
             return H
 
     def measure(self,op,state,initial_config=None,**kwargs):
@@ -127,10 +124,16 @@ class FakeVMC(object):
         nsite=state.nin
         H=self.get_H()
         scfg=SpinSpaceConfig([nsite,2])
-        if isinstance(op,HeisenbergH):
-            op=H
-            v=state.tovec(scfg)
-            return v.conj().dot(op).dot(v)/sum(v.conj()*v)
+        #prepair state
+        v=state.tovec(scfg)
+        if isinstance(self.h,HeisenbergH):
+            #project into 0 block.
+            configs=1-2*scfg.ind2config(arange(scfg.hndim))
+            v[sum(configs,axis=1)!=0]=0
+        v/=norm(v)
+
+        if isinstance(op,(HeisenbergH,TFI)):
+            return v.conj().dot(H).dot(v)
         elif isinstance(op,PartialW):
             configs=1-2*scfg.ind2config(arange(scfg.hndim))
             pS=[]
@@ -140,12 +143,9 @@ class FakeVMC(object):
             configs_g=array([state.group.apply(configs,ig) for ig in xrange(state.group.ng)]).swapaxes(0,1)
             pS.append(sum(configs_g[:,:,:,newaxis]*tanh(theta).reshape([scfg.hndim,state.group.ng,1,state.W.shape[1]]),axis=1).reshape([configs.shape[0],-1]))
             pS=concatenate(pS,axis=-1)
-            v=state.tovec(scfg)
-            v=v/norm(v)
             return sum((v.conj()*v)[:,newaxis]*pS,axis=0)
         elif isinstance(op,OpQueue):
             #get H
-            v=state.tovec(scfg); v/=norm(v)
             OH=v.conj().dot(H).dot(v)
 
             #get W
@@ -161,7 +161,9 @@ class FakeVMC(object):
 
             OPW2=sum((v.conj()*v)[:,newaxis,newaxis]*(pS.conj()[:,:,newaxis]*pS[:,newaxis]),axis=0)
             #OPWH=(v.conj()[:,newaxis,newaxis]*(pS.conj()[:,newaxis,:]*OH[:,:,newaxis])*v[newaxis,:,newaxis]).sum(axis=(0,1))
-            Hloc=H.dot(v)/v
+            Hloc=zeros(v.shape,dtype='complex128')
+            Hloc[v!=0]=H.dot(v)[v!=0]/v[v!=0]
+            #Hloc=H.dot(v)/v
             OPWH=(Hloc[:,newaxis]*pS.conj()*(v.conj()*v)[:,newaxis]).sum(axis=0)
             return OPW,OH,OPW2,OPWH
         else:

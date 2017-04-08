@@ -3,78 +3,25 @@ Variational Monte Carlo Kernel.
 '''
 
 from numpy import *
-from abc import ABCMeta, abstractmethod
 from profilehooks import profile
 import pdb
 
 from linop import c_sandwich,OpQueue
+from binner import Bin
 
 __all__=['VMC']
-
-class MCCore(object):
-    '''
-    Interface of Monte Carlo Kernel.
-    '''
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def set_state(self,state):
-        '''
-        Set up the state for sampling purpose.
-
-        Parameters:
-            :state: <RBM>/..., a state representation.
-        '''
-        pass
-
-    @abstractmethod
-    def random_config(self):
-        '''Produce a random config.'''
-        pass
-
-    @abstractmethod
-    def fire(self,config,**kwargs):
-        '''
-        Get a possible proposal for the next move.
-
-        Parameters:
-            :config: 1darray/None, the old configuration, generate a random config if is None.
-
-        Return:
-            proposal,
-        '''
-        pass
-
-    @abstractmethod
-    def reject(self,proposal,*args,**kwargs):
-        '''
-        Reject the proposal.
-
-        Parameters:
-            proposal: object, the proposal.
-        '''
-        pass
-
-    @abstractmethod
-    def confirm(self,proposal,*args,**kwargs):
-        '''
-        Reject the proposal.
-
-        Parameters:
-            proposal: object, the proposal.
-        '''
-        pass
 
 class VMC(object):
     '''
     Variational Monte Carlo Engine.
     '''
-    def __init__(self,core,nbath,nsample,nmeasure,nstat=1000,sampling_method='metropolis'):
+    def __init__(self,cgen,nbath,nsample,nmeasure,nbin=50,sampling_method='metropolis',iprint=1):
         self.nbath,self.nsample=nbath,nsample
-        self.core=core
+        self.cgen=cgen
         self.sampling_method=sampling_method
-        self.nstat=nstat
         self.nmeasure=nmeasure
+        self.nbin=nbin
+        self.iprint=iprint
 
     def accept(self,pratio,method='metropolis'):
         '''
@@ -94,6 +41,7 @@ class VMC(object):
             A=pratio/(1+pratio)
         return random.random()<A
 
+    @profile
     def measure(self,op,state,tol=0):
         '''
         Measure an operator.
@@ -106,47 +54,46 @@ class VMC(object):
         Return:
             number,
         '''
-        nmeasure,nstat=self.nmeasure,self.nstat
-        bins=[]
+        nmeasure,nstat=self.nmeasure,int(ceil(1.*self.nsample/self.nbin))
+        bins=[Bin() for i in xrange(op.nop if isinstance(op,OpQueue) else 1)]
         ol=[]  #local operator values
         o=None
-        self.core.set_state(state)
-        config=self.core.initial_config
+        self.cgen.set_state(state)
         n_accepted=0
+        nprint=10
 
         for i in xrange(self.nbath+self.nsample):
             #generate new config
-            new_config,pratio=self.core.fire(config)
+            flips,pratio=self.cgen.fire()
             if self.accept(pratio):
-                self.core.confirm(); n_accepted+=1
-                config=new_config
+                self.cgen.confirm(flips); n_accepted+=1
                 o=None
             else:
-                self.core.reject()
+                self.cgen.reject(flips)
             if i>=self.nbath:
                 if i%nmeasure==0:
-                    o=c_sandwich(op,config,state,runtime=self.core.get_runtime()) if o is None else o
-                    ol.append(o)      #correlation problem?
-            if i%nstat==nstat-1:
+                    o=c_sandwich(op,cgen=self.cgen) if o is None else o
+                    ol.append(o)
+            isample=i-self.nbath
+            if isample%nstat==nstat-1:
+                do_print=(isample/nstat)%nprint==nprint-1
+                if do_print: print '%-10s Accept rate: %.3f'%(i+1,n_accepted*1./nstat)
+                n_accepted=0
                 if len(ol)>0:
-                    if not isinstance(op,OpQueue):
-                        bins.append(mean(ol))
-                        var_bin=var(bins,axis=0).mean()
+                    if isinstance(op,OpQueue):
+                        for i,oli in enumerate(zip(*ol)):
+                            bins[i].push(oli)
+                            if do_print: bins[i].print_stat()
                     else:
-                        bins.append([mean(oi) for oi in ol])
-                        var_bin=array([var(bi,axis=0).mean() for bi in zip(*bins)])
-                    std_bin=sqrt(var_bin/len(bins))
-                    print '%-10s Accept rate: %.3f, Std Err: %.5f'%(i+1,n_accepted*1./nstat,sqrt(sum(std_bin**2)))
+                        bins[0].push(ol)
+                        if do_print: bins[0].print_stat()
 
                     #accurate results obtained.
                     if len(bins)>100 and all(std_bin<tol):
                         break
                     ol=[]  #local operator values
-                else:
-                    print '%-10s Accept rate: %.3f'%(i+1,n_accepted*1./nstat)
-                n_accepted=0
 
-        if not isinstance(op,OpQueue):
-            return mean(ol,axis=0)
+        if isinstance(op,OpQueue):
+            return [b.mean() for b in bins]
         else:
-            return [mean(oi,axis=0) for oi in zip(*ol)]
+            return bins[0].mean()

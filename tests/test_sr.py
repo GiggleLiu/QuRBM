@@ -13,7 +13,7 @@ from tba.hgen import SpinSpaceConfig,sx,sy,sz
 from rbm import *
 from toymodel import *
 from sr import *
-from mccore_rbm import *
+from cgen import *
 from vmc import *
 from group import TIGroup,NoGroup
 
@@ -25,7 +25,7 @@ class SRTest(object):
     def __init__(self,nsite,periodic,model='AFH'):
         self.nsite,self.periodic=nsite,periodic
         if model=='AFH':
-            self.h=HeisenbergH(nsite=nsite,J=4.,Jz=4.,periodic=periodic)
+            self.h=HeisenbergH(nsite=nsite,J=1.,Jz=1.,periodic=periodic)
         elif model=='TFI':
             self.h=TFI(nsite=nsite,Jz=-4.,h=-1.,periodic=periodic)
         else:
@@ -34,8 +34,8 @@ class SRTest(object):
         self.fv=FakeVMC(self.h)
 
         #vmc config
-        core=RBMCore(initial_config=[-1,1]*(nsite/2)+[1]*(nsite%2))
-        self.vmc=VMC(core,nbath=200,nsample=50000,nmeasure=nsite,sampling_method='metropolis')
+        cgen=RBMConfigGenerator(initial_config=[-1,1]*(nsite/2)+[1]*(nsite%2),nflip=2 if model=='AFH' else 1)
+        self.vmc=VMC(cgen,nbath=2000,nsample=20000,nmeasure=nsite,sampling_method='metropolis')
 
     def test_sr_fake(self):
         b=0.9
@@ -44,15 +44,15 @@ class SRTest(object):
         e_true,v_true=eigh(H)
         #generate a random rbm and the corresponding vector v
         self.rbm=random_rbm(nin=self.nsite,nhid=self.nsite,group=TIGroup(self.nsite) if self.periodic else NoGroup())
-        for k in xrange(100):
+        for k in xrange(500):
             print 'Running %s-th batch.'%k
-            rbm=SR(self.h,self.rbm,handler=self.fv,niter=1,gamma=0.2,reg_params=('delta',{'b':b,'lambda0':100*b**(5*k)}))
+            rbm=SR(self.h,self.rbm,handler=self.fv,niter=1,gamma=0.2,reg_params=('delta',{'b':b,'lambda0':100*b**(k)}))[0]
             v=rbm.tovec(self.scfg)
             v=v/norm(v)
-            #err=1-abs(v.conj().dot(v_true[:,0]))
+            err_v=1-abs(v.conj().dot(v_true[:,0]))
             ei=v.conj().dot(H).dot(v)
             err=abs(e_true[0]-ei)/(abs(e_true[0])+abs(ei))
-            print 'Error = %.4f%%'%(err*100)
+            print 'E = %s, Error = %.4f%%, Err_v = %.4f%%'%(ei/self.nsite,err*100,err_v*100)
             el.append(err)
         savetxt('data/err0-%s%s.dat'%(self.nsite,'p' if self.periodic else 'o'),el)
         assert_(err<0.01)
@@ -66,12 +66,13 @@ class SRTest(object):
         self.rbm=random_rbm(nin=self.nsite,nhid=self.nsite,group=TIGroup(self.nsite) if self.periodic else NoGroup())
         for k in xrange(100):
             print 'Running %s-th batch.'%k
-            rbm,info=SR(self.h,self.rbm,handler=self.vmc,niter=1,gamma=0.2,reg_params=('delta',{'lambda0':100*b**(5*k),'b':b}))
+            rbm,info=SR(self.h,self.rbm,handler=self.vmc,niter=1,gamma=0.2,reg_params=('delta',{'lambda0':100*b**k,'b':b}))
             v=rbm.tovec(self.scfg); v=v/norm(v)
             #err=1-abs(v.conj().dot(v_true[:,0]))
-            ei=v.conj().dot(H).dot(v)
+            #ei=v.conj().dot(H).dot(v)
+            ei=info['opl'][-1][1]
             err=abs(e_true[0]-ei)/(abs(e_true[0])+abs(ei))
-            print 'Error = %.4f%%'%(err*100)
+            print 'E = %s, Error = %.4f%%'%(ei/self.nsite,err*100)
             el.append(err)
         savetxt('data/err-%s%s.dat'%(self.nsite,'p' if self.periodic else 'o'),el)
         assert_(err<0.05)
@@ -98,7 +99,7 @@ def show_err_sr(nsite):
     savefig('data/err-%s.pdf'%nsite)
 
 if __name__=='__main__':
-    t=SRTest(nsite=5,periodic=True,model='TFI')
+    t=SRTest(nsite=4,periodic=True,model='AFH')
     #t.test_sr_fake()
     t.test_sr()
     #show_err_sr(nsite=4)
