@@ -16,6 +16,7 @@ from sr import *
 from cgen import *
 from vmc import *
 from group import TIGroup,NoGroup
+from optimizer import *
 
 from test_vmc import analyse_sampling
 
@@ -24,6 +25,7 @@ random.seed(2)
 class SRTest(object):
     def __init__(self,nsite,periodic,model='AFH'):
         self.nsite,self.periodic=nsite,periodic
+        self.model=model
         if model=='AFH':
             self.h=HeisenbergH(nsite=nsite,J=1.,Jz=1.,periodic=periodic)
         elif model=='TFI':
@@ -44,15 +46,21 @@ class SRTest(object):
         e_true,v_true=eigh(H)
         #generate a random rbm and the corresponding vector v
         self.rbm=random_rbm(nin=self.nsite,nhid=self.nsite,group=TIGroup(self.nsite) if self.periodic else NoGroup())
-        for k in xrange(500):
+        for k in xrange(100):
             print 'Running %s-th batch.'%k
-            rbm=SR(self.h,self.rbm,handler=self.fv,niter=1,gamma=0.2,reg_params=('delta',{'b':b,'lambda0':100*b**(k)}))[0]
+            #rbm,info=SR(self.h,self.rbm,handler=self.fv,niter=1,optimizer=DefaultOpt(rate=0.1),reg_params=('delta',{'lambda0':1e-4}))
+            #rbm,info=SR(self.h,self.rbm,handler=self.fv,niter=1,optimizer=RMSProp(rho=0.8,rate=0.01),reg_params=('carleo',{'b':b,'lambda0':100*b**(k)}))
+            #rbm,info=SR(self.h,self.rbm,handler=self.fv,niter=1,optimizer=RMSProp(rho=0.8,rate=0.01),reg_params=('trunc',{'lambda0':0.2,'eps_trunc':1e-3}))
+            #rbm,info=SD(self.h,self.rbm,handler=self.fv,niter=1,optimizer=DefaultOpt(0.1))
+            rbm,info=SD(self.h,self.rbm,handler=self.fv,niter=1,optimizer=RMSProp(rho=0.9,rate=0.001))
+    
             v=rbm.tovec(self.scfg)
+            if self.model=='AFH': self.fv.project_vec(v,0)
             v=v/norm(v)
             err_v=1-abs(v.conj().dot(v_true[:,0]))
-            ei=v.conj().dot(H).dot(v)
+            ei=info['opl'][-1][1]
             err=abs(e_true[0]-ei)/(abs(e_true[0])+abs(ei))
-            print 'E = %s, Error = %.4f%%, Err_v = %.4f%%'%(ei/self.nsite,err*100,err_v*100)
+            print 'Error = %.4f%%, Err_v = %.4f%%'%(err*100,err_v*100)
             el.append(err)
         savetxt('data/err0-%s%s.dat'%(self.nsite,'p' if self.periodic else 'o'),el)
         assert_(err<0.01)
@@ -66,7 +74,9 @@ class SRTest(object):
         self.rbm=random_rbm(nin=self.nsite,nhid=self.nsite,group=TIGroup(self.nsite) if self.periodic else NoGroup())
         for k in xrange(100):
             print 'Running %s-th batch.'%k
-            rbm,info=SR(self.h,self.rbm,handler=self.vmc,niter=1,gamma=0.2,reg_params=('delta',{'lambda0':100*b**k,'b':b}))
+            #rbm,info=SR(self.h,self.rbm,handler=self.vmc,niter=1,optimizer=RMSProp(rho=0.7,rate=0.1),reg_params=('carleo',{'lambda0':100*b**k,'b':b}))
+            rbm,info=SR(self.h,self.rbm,handler=self.vmc,niter=1,optimizer=RMSProp(rho=0.8,rate=0.01),reg_params=('trunc',{'lambda0':0.2,'eps_trunc':1e-3}))
+            #rbm,info=SR(self.h,self.rbm,handler=self.vmc,niter=1,optimizer=DefaultOpt(rate=0.1),reg_params=('carleo',{'lambda0':100*b**k,'b':b}))
             v=rbm.tovec(self.scfg); v=v/norm(v)
             #err=1-abs(v.conj().dot(v_true[:,0]))
             #ei=v.conj().dot(H).dot(v)
@@ -99,7 +109,7 @@ def show_err_sr(nsite):
     savefig('data/err-%s.pdf'%nsite)
 
 if __name__=='__main__':
-    t=SRTest(nsite=4,periodic=True,model='AFH')
-    #t.test_sr_fake()
-    t.test_sr()
+    t=SRTest(nsite=4,periodic=False,model='AFH')
+    t.test_sr_fake()
+    #t.test_sr()
     #show_err_sr(nsite=4)

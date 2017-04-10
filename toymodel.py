@@ -91,6 +91,7 @@ class FakeVMC(object):
     '''The Fake VMC program'''
     def __init__(self,h):
         self.h=h
+        self.scfg=scfg=SpinSpaceConfig([h.nsite,2])
 
     def get_H(self):
         '''Get the target Hamiltonian Matrix.'''
@@ -119,17 +120,21 @@ class FakeVMC(object):
                 H=H+J/4.*(kron(kron(sx,eye(2**(nsite-2))),sx)+kron(kron(sy,eye(2**(nsite-2))),sy))+Jz/4.*(kron(kron(sz,eye(2**(nsite-2))),sz))
             return H
 
+    def project_vec(self,vec,m=0):
+        '''Project vector to good quantum number'''
+        scfg=self.scfg
+        configs=1-2*scfg.ind2config(arange(scfg.hndim))
+        vec[sum(configs,axis=1)!=0]=0
+        return vec
+
     def measure(self,op,state,initial_config=None,**kwargs):
         '''Measure an operator through detailed calculation.'''
         nsite=state.nin
         H=self.get_H()
-        scfg=SpinSpaceConfig([nsite,2])
+        scfg=self.scfg
         #prepair state
         v=state.tovec(scfg)
-        if isinstance(self.h,HeisenbergH):
-            #project into 0 block.
-            configs=1-2*scfg.ind2config(arange(scfg.hndim))
-            v[sum(configs,axis=1)!=0]=0
+        if isinstance(self.h,HeisenbergH): v=self.project_vec(v,0)
         v/=norm(v)
 
         if isinstance(op,(HeisenbergH,TFI)):
@@ -165,6 +170,9 @@ class FakeVMC(object):
             Hloc[v!=0]=H.dot(v)[v!=0]/v[v!=0]
             #Hloc=H.dot(v)/v
             OPWH=(Hloc[:,newaxis]*pS.conj()*(v.conj()*v)[:,newaxis]).sum(axis=0)
-            return OPW,OH,OPW2,OPWH
+            if op.nop==4:
+                return OPW,OH,OPW2,OPWH
+            else:
+                return OPW,OH,OPWH
         else:
             raise TypeError()

@@ -7,6 +7,7 @@ from abc import ABCMeta, abstractmethod
 import pdb,time
 
 from utils import logcosh
+from clib.cutils import pop
 
 __all__=['RBMConfigGenerator','ConfigGenerator']
 
@@ -113,45 +114,33 @@ class RBMConfigGenerator(ConfigGenerator):
         #update new theta table
         for ig in xrange(rbm.group.ng):
             for iflip in flips:
-                _theta[ig*nj:(ig+1)*nj]+=-2*self.config[iflip]*rbm.W[rbm.group.ind_apply(iflip,-ig)%nsite]
+                _theta[ig*nj:(ig+1)*nj]-=2*self.config[iflip]*rbm.W[rbm.group.ind_apply(iflip,-ig)%nsite]  #-ig is corrent!
         t1=time.time()
 
-        #pratio=abs(exp(2*(nc[iflip]*rbm.a[iflip]).sum())*prod(cosh(_theta)/cosh(self.theta)))**2
         pratio=exp(2*(-self.config[flips]*rbm.a[flips]).sum()+sum(logcosh(_theta)-logcosh(self.theta)))
+        #nc=copy(self.config); nc[flips]*=-1
         #pratio_=rbm.get_weight(nc)/rbm.get_weight(asarray(self.config))
-
-        #if self.counter%10000==0:
-        #    t1d=time.time()
-        #    true_theta=rbm.feed_input(nc)
-        #    t2=time.time()
-        #    print 'Time: %s, %s. Err: %s'%(t1-t0,t2-t1d,norm(true_theta-_theta))
         #print pratio/pratio_
-        t2=time.time()
-        #print 'Time: %s, %s.'%(t1-t0,t2-t1)
         return _theta,pratio
 
     def fire(self):
         '''Fire a proposal.'''
-        if self.state is None: raise AttributeError("Please set the state before sampling!")
         rbm=self.state
         nsite=rbm.nin
         config=self.config
         
         #generate a new config by flipping n spin
         if self.nflip==2:
-            upmask=config==1
-            flips=random.randint(0,nsite/2,2)
-            iflip0=where(upmask)[0][flips[0]]
-            iflip1=where(~upmask)[0][flips[1]]
-            flips=array([iflip0,iflip1])
+            flips=random.randint(0,nsite,2)
+            while flips[0]==flips[1]:
+                flips=random.randint(0,nsite,2)
         else:
             iflip0=random.randint(nsite)
             flips=array([iflip0])
 
         #transfer probability is equal, pratio is equal to the probability ratio
-        self._theta,pop=self.pop(flips)
-        self.counter+=1
-        return flips,norm(pop)**2
+        self._theta,pop1=pop(config=self.config,flips=flips,W=rbm.W,a=rbm.a,theta=self.theta,ng=rbm.group.ng)
+        return flips,norm(pop1)**2
 
     def reject(self,*args,**kwargs):
         #self._theta=None

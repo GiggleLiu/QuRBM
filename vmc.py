@@ -41,7 +41,6 @@ class VMC(object):
             A=pratio/(1+pratio)
         return random.random()<A
 
-    @profile
     def measure(self,op,state,tol=0):
         '''
         Measure an operator.

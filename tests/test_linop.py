@@ -10,6 +10,7 @@ from toymodel import *
 from rbm import *
 from linop import *
 from group import *
+from cgen import *
 
 class TestLinop(object):
     def __init__(self):
@@ -44,11 +45,15 @@ class TestLinop(object):
             H,v,v_g=self.H2,self.v,self.v_g
             print 'Testing the non-group version'
             O_true=ket.conj().dot(H).dot(v)/sum(ket.conj()*v)
-            O_s=c_sandwich(self.h2,1-config*2,self.rbm)
+            cg=RBMConfigGenerator(nflip=2,initial_config=1-2*config)
+            cg.set_state(self.rbm)
+
+            O_s=c_sandwich(self.h2,cg)
             assert_almost_equal(O_s,O_true,decimal=8)
 
             print 'Testing the group version'
-            O_sg=c_sandwich(self.h2,1-config*2,self.rbm_g)
+            cg.set_state(self.rbm_g)
+            O_sg=c_sandwich(self.h2,cg)
             O_trueg=ket.conj().dot(H).dot(v_g)/sum(ket.conj()*v_g)
 
             assert_almost_equal(O_sg,O_trueg,decimal=8)
@@ -59,11 +64,14 @@ class TestLinop(object):
         ket=zeros(self.scfg.hndim); ket[self.scfg.config2ind(config)]=1
         H,v,v_g=self.H,self.v,self.v_g
 
+        cg=RBMConfigGenerator(nflip=2,initial_config=1-2*config)
+        cg.set_state(self.rbm)
         O_true=ket.conj().dot(Wmat).dot(v)/sum(ket.conj()*v)
-        O_s=c_sandwich(self.pW,1-config*2,self.rbm)
+        O_s=c_sandwich(self.pW,cg)
 
         O_trueg=ket.conj().dot(Wmat).dot(v_g)/sum(ket.conj()*v_g)
-        O_sg=c_sandwich(self.pW,1-config*2,self.rbm_g)
+        cg.set_state(self.rbm_g)
+        O_sg=c_sandwich(self.pW,cg)
 
         assert_almost_equal(O_s,O_true,decimal=8)
         assert_almost_equal(O_sg,O_trueg,decimal=8)

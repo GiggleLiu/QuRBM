@@ -22,8 +22,15 @@ def test_model():
     h=HeisenbergH(nsite=4)
     config=array([1,1,0,0])
     print 'Testing rmatmul of Hamiltonian'
-    res=h._rmatmul(1-2*config)
-    vec=res.tovec(scfg)
+    wl,flips=h._rmatmul(1-2*config)
+    configs=[]
+    for flip in flips:
+        nc=copy(1-2*config)
+        nc[flip]*=-1
+        configs.append(nc)
+    ss=SparseState(wl,configs)
+
+    vec=ss.tovec(scfg)
     v0=zeros(scfg.hndim); v0[scfg.config2ind(config)]=1
     v_true=v0.dot(H)
     assert_allclose(vec,v_true)
