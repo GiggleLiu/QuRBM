@@ -970,18 +970,6 @@ static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j
 static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i,
                                                      int is_list, int wraparound, int boundscheck);
 
-/* RaiseTooManyValuesToUnpack.proto */
-static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected);
-
-/* RaiseNeedMoreValuesToUnpack.proto */
-static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index);
-
-/* IterFinish.proto */
-static CYTHON_INLINE int __Pyx_IterFinish(void);
-
-/* UnpackItemEndCheck.proto */
-static int __Pyx_IternextUnpackEndCheck(PyObject *retval, Py_ssize_t expected);
-
 /* PyThreadStateGet.proto */
 #if CYTHON_COMPILING_IN_CPYTHON
 #define __Pyx_PyThreadState_declare  PyThreadState *__pyx_tstate;
@@ -1029,6 +1017,12 @@ static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key) {
 #else
     #define __Pyx_PyDict_GetItem(d, key) PyObject_GetItem(d, key)
 #endif
+
+/* RaiseTooManyValuesToUnpack.proto */
+static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected);
+
+/* RaiseNeedMoreValuesToUnpack.proto */
+static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index);
 
 /* RaiseNoneIterError.proto */
 static CYTHON_INLINE void __Pyx_RaiseNoneNotIterableError(void);
@@ -1158,6 +1152,9 @@ static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
 
+/* CIntToPy.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_Py_intptr_t(Py_intptr_t value);
+
 /* None.proto */
 static CYTHON_INLINE __pyx_t_float_complex __pyx_t_float_complex_from_parts(float, float);
 
@@ -1268,13 +1265,12 @@ static __Pyx_TypeInfo __Pyx_TypeInfo___pyx_t_double_complex = { "double complex"
 int __pyx_module_is_main_cutils = 0;
 
 /* Implementation of 'cutils' */
-static PyObject *__pyx_builtin_xrange;
-static PyObject *__pyx_builtin_zip;
-static PyObject *__pyx_builtin_ValueError;
 static PyObject *__pyx_builtin_range;
+static PyObject *__pyx_builtin_ValueError;
 static PyObject *__pyx_builtin_RuntimeError;
 static const char __pyx_k_W[] = "W";
 static const char __pyx_k_a[] = "a";
+static const char __pyx_k_i[] = "i";
 static const char __pyx_k_x[] = "x";
 static const char __pyx_k_y[] = "y";
 static const char __pyx_k_ci[] = "ci";
@@ -1284,14 +1280,13 @@ static const char __pyx_k_ng[] = "ng";
 static const char __pyx_k_nv[] = "nv";
 static const char __pyx_k_th[] = "th";
 static const char __pyx_k_pop[] = "pop";
-static const char __pyx_k_zip[] = "zip";
 static const char __pyx_k_copy[] = "copy";
 static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_test[] = "__test__";
 static const char __pyx_k_th_2[] = "_th";
+static const char __pyx_k_time[] = "time";
 static const char __pyx_k_flips[] = "flips";
 static const char __pyx_k_iflip[] = "iflip";
-static const char __pyx_k_numpy[] = "numpy";
 static const char __pyx_k_range[] = "range";
 static const char __pyx_k_theta[] = "theta";
 static const char __pyx_k_config[] = "config";
@@ -1299,7 +1294,6 @@ static const char __pyx_k_cutils[] = "cutils";
 static const char __pyx_k_import[] = "__import__";
 static const char __pyx_k_lncosh[] = "lncosh";
 static const char __pyx_k_pratio[] = "pratio";
-static const char __pyx_k_xrange[] = "xrange";
 static const char __pyx_k_theta_2[] = "_theta";
 static const char __pyx_k_ValueError[] = "ValueError";
 static const char __pyx_k_RuntimeError[] = "RuntimeError";
@@ -1323,6 +1317,7 @@ static PyObject *__pyx_n_s_copy;
 static PyObject *__pyx_n_s_cutils;
 static PyObject *__pyx_n_s_flips;
 static PyObject *__pyx_kp_s_home_leo_pycode_rbm_clib_cutils;
+static PyObject *__pyx_n_s_i;
 static PyObject *__pyx_n_s_iflip;
 static PyObject *__pyx_n_s_ig;
 static PyObject *__pyx_n_s_import;
@@ -1332,7 +1327,6 @@ static PyObject *__pyx_kp_u_ndarray_is_not_C_contiguous;
 static PyObject *__pyx_kp_u_ndarray_is_not_Fortran_contiguou;
 static PyObject *__pyx_n_s_nf;
 static PyObject *__pyx_n_s_ng;
-static PyObject *__pyx_n_s_numpy;
 static PyObject *__pyx_n_s_nv;
 static PyObject *__pyx_n_s_pop;
 static PyObject *__pyx_n_s_pratio;
@@ -1342,11 +1336,10 @@ static PyObject *__pyx_n_s_th;
 static PyObject *__pyx_n_s_th_2;
 static PyObject *__pyx_n_s_theta;
 static PyObject *__pyx_n_s_theta_2;
+static PyObject *__pyx_n_s_time;
 static PyObject *__pyx_kp_u_unknown_dtype_code_in_numpy_pxd;
 static PyObject *__pyx_n_s_x;
-static PyObject *__pyx_n_s_xrange;
 static PyObject *__pyx_n_s_y;
-static PyObject *__pyx_n_s_zip;
 static PyObject *__pyx_pf_6cutils_lncosh(CYTHON_UNUSED PyObject *__pyx_self, __pyx_t_double_complex __pyx_v_x); /* proto */
 static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_config, PyArrayObject *__pyx_v_flips, PyArrayObject *__pyx_v_W, PyArrayObject *__pyx_v_a, PyArrayObject *__pyx_v_theta, int __pyx_v_ng); /* proto */
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
@@ -1448,7 +1441,7 @@ static PyObject *__pyx_pf_6cutils_lncosh(CYTHON_UNUSED PyObject *__pyx_self, __p
  * @cython.boundscheck(False) # turn off bounds-checking for entire function
  * @cython.wraparound(False)  # turn off negative index wrapping for entire function
  * def pop(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
- *         np.ndarray[int_t,ndim=1,mode='c'] flips not None,
+ *         np.ndarray[int_t,ndim=1,mode='c'] flips,
  *         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
  */
 
@@ -1541,7 +1534,7 @@ static PyObject *__pyx_pw_6cutils_3pop(PyObject *__pyx_self, PyObject *__pyx_arg
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_config), __pyx_ptype_5numpy_ndarray, 0, "config", 0))) __PYX_ERR(0, 23, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_flips), __pyx_ptype_5numpy_ndarray, 0, "flips", 0))) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_flips), __pyx_ptype_5numpy_ndarray, 1, "flips", 0))) __PYX_ERR(0, 24, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_W), __pyx_ptype_5numpy_ndarray, 0, "W", 0))) __PYX_ERR(0, 25, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_a), __pyx_ptype_5numpy_ndarray, 0, "a", 0))) __PYX_ERR(0, 26, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_theta), __pyx_ptype_5numpy_ndarray, 0, "theta", 0))) __PYX_ERR(0, 27, __pyx_L1_error)
@@ -1562,10 +1555,9 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
   int __pyx_v_ig;
   int __pyx_v_iflip;
   int __pyx_v_ci;
+  int __pyx_v_i;
   PyArrayObject *__pyx_v__theta = 0;
   __pyx_t_double_complex __pyx_v_pratio;
-  __pyx_t_double_complex __pyx_v_th;
-  __pyx_t_double_complex __pyx_v__th;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_W;
   __Pyx_Buffer __pyx_pybuffer_W;
   __Pyx_LocalBuf_ND __pyx_pybuffernd__theta;
@@ -1596,9 +1588,9 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
   PyObject *__pyx_t_14 = NULL;
   Py_ssize_t __pyx_t_15;
   Py_ssize_t __pyx_t_16;
-  PyObject *(*__pyx_t_17)(PyObject *);
-  __pyx_t_double_complex __pyx_t_18;
-  __pyx_t_double_complex __pyx_t_19;
+  npy_intp __pyx_t_17;
+  Py_ssize_t __pyx_t_18;
+  Py_ssize_t __pyx_t_19;
   __Pyx_RefNannySetupContext("pop", 0);
   __pyx_pybuffer__theta.pybuffer.buf = NULL;
   __pyx_pybuffer__theta.refcount = 0;
@@ -1664,13 +1656,13 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
  *     cdef int nv=W.shape[0]
  *     cdef int nf=W.shape[1]  #number of features.             # <<<<<<<<<<<<<<
  * 
- *     cdef int ig,iflip,ci
+ *     cdef int ig,iflip,ci,i
  */
   __pyx_v_nf = (__pyx_v_W->dimensions[1]);
 
   /* "cutils.pyx":32
  * 
- *     cdef int ig,iflip,ci
+ *     cdef int ig,iflip,ci,i
  *     cdef np.ndarray[complex_t,ndim=1,mode='c'] _theta=theta.copy()             # <<<<<<<<<<<<<<
  *     cdef complex_t pratio=0
  *     cdef complex_t th
@@ -1710,7 +1702,7 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
   __pyx_t_1 = 0;
 
   /* "cutils.pyx":33
- *     cdef int ig,iflip,ci
+ *     cdef int ig,iflip,ci,i
  *     cdef np.ndarray[complex_t,ndim=1,mode='c'] _theta=theta.copy()
  *     cdef complex_t pratio=0             # <<<<<<<<<<<<<<
  *     cdef complex_t th
@@ -1723,7 +1715,7 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
  * 
  *     for iflip in flips:             # <<<<<<<<<<<<<<
  *         ci=config[iflip]
- *         for ig in xrange(ng):
+ *         for ig in range(ng):
  */
   if (likely(PyList_CheckExact(((PyObject *)__pyx_v_flips))) || PyTuple_CheckExact(((PyObject *)__pyx_v_flips))) {
     __pyx_t_1 = ((PyObject *)__pyx_v_flips); __Pyx_INCREF(__pyx_t_1); __pyx_t_5 = 0;
@@ -1772,7 +1764,7 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
  * 
  *     for iflip in flips:
  *         ci=config[iflip]             # <<<<<<<<<<<<<<
- *         for ig in xrange(ng):
+ *         for ig in range(ng):
  *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
  */
     __pyx_t_8 = __pyx_v_iflip;
@@ -1781,7 +1773,7 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
     /* "cutils.pyx":39
  *     for iflip in flips:
  *         ci=config[iflip]
- *         for ig in xrange(ng):             # <<<<<<<<<<<<<<
+ *         for ig in range(ng):             # <<<<<<<<<<<<<<
  *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
  *         pratio-=2*config[iflip]*a[iflip]
  */
@@ -1791,10 +1783,10 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
 
       /* "cutils.pyx":40
  *         ci=config[iflip]
- *         for ig in xrange(ng):
+ *         for ig in range(ng):
  *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]             # <<<<<<<<<<<<<<
  *         pratio-=2*config[iflip]*a[iflip]
- *     for th,_th in zip(theta,_theta):
+ *     for i in range(theta.shape[0]):
  */
       __pyx_t_2 = __Pyx_PyInt_From_int((__pyx_v_ig * __pyx_v_nf)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 40, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
@@ -1830,11 +1822,11 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
     }
 
     /* "cutils.pyx":41
- *         for ig in xrange(ng):
+ *         for ig in range(ng):
  *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
  *         pratio-=2*config[iflip]*a[iflip]             # <<<<<<<<<<<<<<
- *     for th,_th in zip(theta,_theta):
- *         pratio+=lncoshc(_th)-lncoshc(th)
+ *     for i in range(theta.shape[0]):
+ *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
  */
     __pyx_t_15 = __pyx_v_iflip;
     __pyx_t_16 = __pyx_v_iflip;
@@ -1845,7 +1837,7 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
  * 
  *     for iflip in flips:             # <<<<<<<<<<<<<<
  *         ci=config[iflip]
- *         for ig in xrange(ng):
+ *         for ig in range(ng):
  */
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -1853,147 +1845,36 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
   /* "cutils.pyx":42
  *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
  *         pratio-=2*config[iflip]*a[iflip]
- *     for th,_th in zip(theta,_theta):             # <<<<<<<<<<<<<<
- *         pratio+=lncoshc(_th)-lncoshc(th)
+ *     for i in range(theta.shape[0]):             # <<<<<<<<<<<<<<
+ *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
  *     pratio=exp(pratio)
  */
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_INCREF(((PyObject *)__pyx_v_theta));
-  __Pyx_GIVEREF(((PyObject *)__pyx_v_theta));
-  PyTuple_SET_ITEM(__pyx_t_1, 0, ((PyObject *)__pyx_v_theta));
-  __Pyx_INCREF(((PyObject *)__pyx_v__theta));
-  __Pyx_GIVEREF(((PyObject *)__pyx_v__theta));
-  PyTuple_SET_ITEM(__pyx_t_1, 1, ((PyObject *)__pyx_v__theta));
-  __pyx_t_10 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_1, NULL); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 42, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_10);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (likely(PyList_CheckExact(__pyx_t_10)) || PyTuple_CheckExact(__pyx_t_10)) {
-    __pyx_t_1 = __pyx_t_10; __Pyx_INCREF(__pyx_t_1); __pyx_t_5 = 0;
-    __pyx_t_6 = NULL;
-  } else {
-    __pyx_t_5 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_t_10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_6 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
-  }
-  __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  for (;;) {
-    if (likely(!__pyx_t_6)) {
-      if (likely(PyList_CheckExact(__pyx_t_1))) {
-        if (__pyx_t_5 >= PyList_GET_SIZE(__pyx_t_1)) break;
-        #if CYTHON_COMPILING_IN_CPYTHON
-        __pyx_t_10 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_5); __Pyx_INCREF(__pyx_t_10); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
-        #else
-        __pyx_t_10 = PySequence_ITEM(__pyx_t_1, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 42, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_10);
-        #endif
-      } else {
-        if (__pyx_t_5 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
-        #if CYTHON_COMPILING_IN_CPYTHON
-        __pyx_t_10 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_5); __Pyx_INCREF(__pyx_t_10); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
-        #else
-        __pyx_t_10 = PySequence_ITEM(__pyx_t_1, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 42, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_10);
-        #endif
-      }
-    } else {
-      __pyx_t_10 = __pyx_t_6(__pyx_t_1);
-      if (unlikely(!__pyx_t_10)) {
-        PyObject* exc_type = PyErr_Occurred();
-        if (exc_type) {
-          if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(0, 42, __pyx_L1_error)
-        }
-        break;
-      }
-      __Pyx_GOTREF(__pyx_t_10);
-    }
-    if ((likely(PyTuple_CheckExact(__pyx_t_10))) || (PyList_CheckExact(__pyx_t_10))) {
-      PyObject* sequence = __pyx_t_10;
-      #if CYTHON_COMPILING_IN_CPYTHON
-      Py_ssize_t size = Py_SIZE(sequence);
-      #else
-      Py_ssize_t size = PySequence_Size(sequence);
-      #endif
-      if (unlikely(size != 2)) {
-        if (size > 2) __Pyx_RaiseTooManyValuesError(2);
-        else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-        __PYX_ERR(0, 42, __pyx_L1_error)
-      }
-      #if CYTHON_COMPILING_IN_CPYTHON
-      if (likely(PyTuple_CheckExact(sequence))) {
-        __pyx_t_13 = PyTuple_GET_ITEM(sequence, 0); 
-        __pyx_t_14 = PyTuple_GET_ITEM(sequence, 1); 
-      } else {
-        __pyx_t_13 = PyList_GET_ITEM(sequence, 0); 
-        __pyx_t_14 = PyList_GET_ITEM(sequence, 1); 
-      }
-      __Pyx_INCREF(__pyx_t_13);
-      __Pyx_INCREF(__pyx_t_14);
-      #else
-      __pyx_t_13 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 42, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_13);
-      __pyx_t_14 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 42, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_14);
-      #endif
-      __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-    } else {
-      Py_ssize_t index = -1;
-      __pyx_t_3 = PyObject_GetIter(__pyx_t_10); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 42, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-      __pyx_t_17 = Py_TYPE(__pyx_t_3)->tp_iternext;
-      index = 0; __pyx_t_13 = __pyx_t_17(__pyx_t_3); if (unlikely(!__pyx_t_13)) goto __pyx_L9_unpacking_failed;
-      __Pyx_GOTREF(__pyx_t_13);
-      index = 1; __pyx_t_14 = __pyx_t_17(__pyx_t_3); if (unlikely(!__pyx_t_14)) goto __pyx_L9_unpacking_failed;
-      __Pyx_GOTREF(__pyx_t_14);
-      if (__Pyx_IternextUnpackEndCheck(__pyx_t_17(__pyx_t_3), 2) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
-      __pyx_t_17 = NULL;
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      goto __pyx_L10_unpacking_done;
-      __pyx_L9_unpacking_failed:;
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_17 = NULL;
-      if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-      __PYX_ERR(0, 42, __pyx_L1_error)
-      __pyx_L10_unpacking_done:;
-    }
-    __pyx_t_18 = __Pyx_PyComplex_As___pyx_t_double_complex(__pyx_t_13); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
-    __pyx_t_19 = __Pyx_PyComplex_As___pyx_t_double_complex(__pyx_t_14); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-    __pyx_v_th = __pyx_t_18;
-    __pyx_v__th = __pyx_t_19;
+  __pyx_t_17 = (__pyx_v_theta->dimensions[0]);
+  for (__pyx_t_7 = 0; __pyx_t_7 < __pyx_t_17; __pyx_t_7+=1) {
+    __pyx_v_i = __pyx_t_7;
 
     /* "cutils.pyx":43
  *         pratio-=2*config[iflip]*a[iflip]
- *     for th,_th in zip(theta,_theta):
- *         pratio+=lncoshc(_th)-lncoshc(th)             # <<<<<<<<<<<<<<
+ *     for i in range(theta.shape[0]):
+ *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])             # <<<<<<<<<<<<<<
  *     pratio=exp(pratio)
  *     return _theta,pratio
  */
-    __pyx_v_pratio = __Pyx_c_sum(__pyx_v_pratio, __Pyx_c_diff(lncoshc(__pyx_v__th), lncoshc(__pyx_v_th)));
-
-    /* "cutils.pyx":42
- *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
- *         pratio-=2*config[iflip]*a[iflip]
- *     for th,_th in zip(theta,_theta):             # <<<<<<<<<<<<<<
- *         pratio+=lncoshc(_th)-lncoshc(th)
- *     pratio=exp(pratio)
- */
+    __pyx_t_18 = __pyx_v_i;
+    __pyx_t_19 = __pyx_v_i;
+    __pyx_v_pratio = __Pyx_c_sum(__pyx_v_pratio, __Pyx_c_diff(lncoshc((*__Pyx_BufPtrCContig1d(__pyx_t_double_complex *, __pyx_pybuffernd__theta.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd__theta.diminfo[0].strides))), lncoshc((*__Pyx_BufPtrCContig1d(__pyx_t_double_complex *, __pyx_pybuffernd_theta.rcbuffer->pybuffer.buf, __pyx_t_19, __pyx_pybuffernd_theta.diminfo[0].strides)))));
   }
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "cutils.pyx":44
- *     for th,_th in zip(theta,_theta):
- *         pratio+=lncoshc(_th)-lncoshc(th)
+ *     for i in range(theta.shape[0]):
+ *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
  *     pratio=exp(pratio)             # <<<<<<<<<<<<<<
  *     return _theta,pratio
  */
   __pyx_v_pratio = exp(__pyx_v_pratio);
 
   /* "cutils.pyx":45
- *         pratio+=lncoshc(_th)-lncoshc(th)
+ *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
  *     pratio=exp(pratio)
  *     return _theta,pratio             # <<<<<<<<<<<<<<
  */
@@ -2016,7 +1897,7 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
  * @cython.boundscheck(False) # turn off bounds-checking for entire function
  * @cython.wraparound(False)  # turn off negative index wrapping for entire function
  * def pop(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
- *         np.ndarray[int_t,ndim=1,mode='c'] flips not None,
+ *         np.ndarray[int_t,ndim=1,mode='c'] flips,
  *         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
  */
 
@@ -4214,6 +4095,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_cutils, __pyx_k_cutils, sizeof(__pyx_k_cutils), 0, 0, 1, 1},
   {&__pyx_n_s_flips, __pyx_k_flips, sizeof(__pyx_k_flips), 0, 0, 1, 1},
   {&__pyx_kp_s_home_leo_pycode_rbm_clib_cutils, __pyx_k_home_leo_pycode_rbm_clib_cutils, sizeof(__pyx_k_home_leo_pycode_rbm_clib_cutils), 0, 0, 1, 0},
+  {&__pyx_n_s_i, __pyx_k_i, sizeof(__pyx_k_i), 0, 0, 1, 1},
   {&__pyx_n_s_iflip, __pyx_k_iflip, sizeof(__pyx_k_iflip), 0, 0, 1, 1},
   {&__pyx_n_s_ig, __pyx_k_ig, sizeof(__pyx_k_ig), 0, 0, 1, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
@@ -4223,7 +4105,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_u_ndarray_is_not_Fortran_contiguou, __pyx_k_ndarray_is_not_Fortran_contiguou, sizeof(__pyx_k_ndarray_is_not_Fortran_contiguou), 0, 1, 0, 0},
   {&__pyx_n_s_nf, __pyx_k_nf, sizeof(__pyx_k_nf), 0, 0, 1, 1},
   {&__pyx_n_s_ng, __pyx_k_ng, sizeof(__pyx_k_ng), 0, 0, 1, 1},
-  {&__pyx_n_s_numpy, __pyx_k_numpy, sizeof(__pyx_k_numpy), 0, 0, 1, 1},
   {&__pyx_n_s_nv, __pyx_k_nv, sizeof(__pyx_k_nv), 0, 0, 1, 1},
   {&__pyx_n_s_pop, __pyx_k_pop, sizeof(__pyx_k_pop), 0, 0, 1, 1},
   {&__pyx_n_s_pratio, __pyx_k_pratio, sizeof(__pyx_k_pratio), 0, 0, 1, 1},
@@ -4233,22 +4114,15 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_th_2, __pyx_k_th_2, sizeof(__pyx_k_th_2), 0, 0, 1, 1},
   {&__pyx_n_s_theta, __pyx_k_theta, sizeof(__pyx_k_theta), 0, 0, 1, 1},
   {&__pyx_n_s_theta_2, __pyx_k_theta_2, sizeof(__pyx_k_theta_2), 0, 0, 1, 1},
+  {&__pyx_n_s_time, __pyx_k_time, sizeof(__pyx_k_time), 0, 0, 1, 1},
   {&__pyx_kp_u_unknown_dtype_code_in_numpy_pxd, __pyx_k_unknown_dtype_code_in_numpy_pxd, sizeof(__pyx_k_unknown_dtype_code_in_numpy_pxd), 0, 1, 0, 0},
   {&__pyx_n_s_x, __pyx_k_x, sizeof(__pyx_k_x), 0, 0, 1, 1},
-  {&__pyx_n_s_xrange, __pyx_k_xrange, sizeof(__pyx_k_xrange), 0, 0, 1, 1},
   {&__pyx_n_s_y, __pyx_k_y, sizeof(__pyx_k_y), 0, 0, 1, 1},
-  {&__pyx_n_s_zip, __pyx_k_zip, sizeof(__pyx_k_zip), 0, 0, 1, 1},
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  #if PY_MAJOR_VERSION >= 3
-  __pyx_builtin_xrange = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_xrange) __PYX_ERR(0, 39, __pyx_L1_error)
-  #else
-  __pyx_builtin_xrange = __Pyx_GetBuiltinName(__pyx_n_s_xrange); if (!__pyx_builtin_xrange) __PYX_ERR(0, 39, __pyx_L1_error)
-  #endif
-  __pyx_builtin_zip = __Pyx_GetBuiltinName(__pyx_n_s_zip); if (!__pyx_builtin_zip) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 39, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(1, 218, __pyx_L1_error)
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(1, 231, __pyx_L1_error)
   __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) __PYX_ERR(1, 799, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
@@ -4341,13 +4215,13 @@ static int __Pyx_InitCachedConstants(void) {
  * @cython.boundscheck(False) # turn off bounds-checking for entire function
  * @cython.wraparound(False)  # turn off negative index wrapping for entire function
  * def pop(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
- *         np.ndarray[int_t,ndim=1,mode='c'] flips not None,
+ *         np.ndarray[int_t,ndim=1,mode='c'] flips,
  *         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
  */
-  __pyx_tuple__9 = PyTuple_Pack(15, __pyx_n_s_config, __pyx_n_s_flips, __pyx_n_s_W, __pyx_n_s_a, __pyx_n_s_theta, __pyx_n_s_ng, __pyx_n_s_nv, __pyx_n_s_nf, __pyx_n_s_ig, __pyx_n_s_iflip, __pyx_n_s_ci, __pyx_n_s_theta_2, __pyx_n_s_pratio, __pyx_n_s_th, __pyx_n_s_th_2); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 23, __pyx_L1_error)
+  __pyx_tuple__9 = PyTuple_Pack(16, __pyx_n_s_config, __pyx_n_s_flips, __pyx_n_s_W, __pyx_n_s_a, __pyx_n_s_theta, __pyx_n_s_ng, __pyx_n_s_nv, __pyx_n_s_nf, __pyx_n_s_ig, __pyx_n_s_iflip, __pyx_n_s_ci, __pyx_n_s_i, __pyx_n_s_theta_2, __pyx_n_s_pratio, __pyx_n_s_th, __pyx_n_s_th_2); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__9);
   __Pyx_GIVEREF(__pyx_tuple__9);
-  __pyx_codeobj__10 = (PyObject*)__Pyx_PyCode_New(6, 0, 15, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__9, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_leo_pycode_rbm_clib_cutils, __pyx_n_s_pop, 23, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__10)) __PYX_ERR(0, 23, __pyx_L1_error)
+  __pyx_codeobj__10 = (PyObject*)__Pyx_PyCode_New(6, 0, 16, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__9, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_leo_pycode_rbm_clib_cutils, __pyx_n_s_pop, 23, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__10)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -4469,13 +4343,13 @@ PyMODINIT_FUNC PyInit_cutils(void)
   /* "cutils.pyx":3
  * cimport cython
  * cimport numpy as np
- * import numpy             # <<<<<<<<<<<<<<
+ * import time             # <<<<<<<<<<<<<<
  * 
  * ctypedef np.complex128_t complex_t
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_time, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_numpy, __pyx_t_1) < 0) __PYX_ERR(0, 3, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_time, __pyx_t_1) < 0) __PYX_ERR(0, 3, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "cutils.pyx":14
@@ -4494,7 +4368,7 @@ PyMODINIT_FUNC PyInit_cutils(void)
  * @cython.boundscheck(False) # turn off bounds-checking for entire function
  * @cython.wraparound(False)  # turn off negative index wrapping for entire function
  * def pop(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
- *         np.ndarray[int_t,ndim=1,mode='c'] flips not None,
+ *         np.ndarray[int_t,ndim=1,mode='c'] flips,
  *         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
  */
   __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_6cutils_3pop, NULL, __pyx_n_s_cutils); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 23, __pyx_L1_error)
@@ -4505,7 +4379,7 @@ PyMODINIT_FUNC PyInit_cutils(void)
   /* "cutils.pyx":1
  * cimport cython             # <<<<<<<<<<<<<<
  * cimport numpy as np
- * import numpy
+ * import time
  */
   __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -5485,66 +5359,6 @@ static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i, 
     return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
 }
 
-/* RaiseTooManyValuesToUnpack */
-      static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected) {
-    PyErr_Format(PyExc_ValueError,
-                 "too many values to unpack (expected %" CYTHON_FORMAT_SSIZE_T "d)", expected);
-}
-
-/* RaiseNeedMoreValuesToUnpack */
-      static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index) {
-    PyErr_Format(PyExc_ValueError,
-                 "need more than %" CYTHON_FORMAT_SSIZE_T "d value%.1s to unpack",
-                 index, (index == 1) ? "" : "s");
-}
-
-/* IterFinish */
-      static CYTHON_INLINE int __Pyx_IterFinish(void) {
-#if CYTHON_COMPILING_IN_CPYTHON
-    PyThreadState *tstate = PyThreadState_GET();
-    PyObject* exc_type = tstate->curexc_type;
-    if (unlikely(exc_type)) {
-        if (likely(exc_type == PyExc_StopIteration) || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration)) {
-            PyObject *exc_value, *exc_tb;
-            exc_value = tstate->curexc_value;
-            exc_tb = tstate->curexc_traceback;
-            tstate->curexc_type = 0;
-            tstate->curexc_value = 0;
-            tstate->curexc_traceback = 0;
-            Py_DECREF(exc_type);
-            Py_XDECREF(exc_value);
-            Py_XDECREF(exc_tb);
-            return 0;
-        } else {
-            return -1;
-        }
-    }
-    return 0;
-#else
-    if (unlikely(PyErr_Occurred())) {
-        if (likely(PyErr_ExceptionMatches(PyExc_StopIteration))) {
-            PyErr_Clear();
-            return 0;
-        } else {
-            return -1;
-        }
-    }
-    return 0;
-#endif
-}
-
-/* UnpackItemEndCheck */
-      static int __Pyx_IternextUnpackEndCheck(PyObject *retval, Py_ssize_t expected) {
-    if (unlikely(retval)) {
-        Py_DECREF(retval);
-        __Pyx_RaiseTooManyValuesError(expected);
-        return -1;
-    } else {
-        return __Pyx_IterFinish();
-    }
-    return 0;
-}
-
 /* PyErrFetchRestore */
       #if CYTHON_COMPILING_IN_CPYTHON
 static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb) {
@@ -5731,6 +5545,19 @@ bad:
     return;
 }
 #endif
+
+/* RaiseTooManyValuesToUnpack */
+        static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected) {
+    PyErr_Format(PyExc_ValueError,
+                 "too many values to unpack (expected %" CYTHON_FORMAT_SSIZE_T "d)", expected);
+}
+
+/* RaiseNeedMoreValuesToUnpack */
+        static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index) {
+    PyErr_Format(PyExc_ValueError,
+                 "need more than %" CYTHON_FORMAT_SSIZE_T "d value%.1s to unpack",
+                 index, (index == 1) ? "" : "s");
+}
 
 /* RaiseNoneIterError */
         static CYTHON_INLINE void __Pyx_RaiseNoneNotIterableError(void) {
@@ -6201,6 +6028,33 @@ static void __Pyx_ReleaseBuffer(Py_buffer *view) {
         int one = 1; int little = (int)*(unsigned char *)&one;
         unsigned char *bytes = (unsigned char *)&value;
         return _PyLong_FromByteArray(bytes, sizeof(long),
+                                     little, !is_unsigned);
+    }
+}
+
+/* CIntToPy */
+        static CYTHON_INLINE PyObject* __Pyx_PyInt_From_Py_intptr_t(Py_intptr_t value) {
+    const Py_intptr_t neg_one = (Py_intptr_t) -1, const_zero = (Py_intptr_t) 0;
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(Py_intptr_t) < sizeof(long)) {
+            return PyInt_FromLong((long) value);
+        } else if (sizeof(Py_intptr_t) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+        } else if (sizeof(Py_intptr_t) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+        }
+    } else {
+        if (sizeof(Py_intptr_t) <= sizeof(long)) {
+            return PyInt_FromLong((long) value);
+        } else if (sizeof(Py_intptr_t) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+        }
+    }
+    {
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        unsigned char *bytes = (unsigned char *)&value;
+        return _PyLong_FromByteArray(bytes, sizeof(Py_intptr_t),
                                      little, !is_unsigned);
     }
 }

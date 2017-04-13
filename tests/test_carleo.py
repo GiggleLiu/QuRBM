@@ -20,7 +20,7 @@ from optimizer import *
 
 from test_vmc import analyse_sampling
 
-random.seed(2)
+random.seed(3)
 
 class SRTest(object):
     def __init__(self,nsite,periodic,model='AFH'):
@@ -47,7 +47,9 @@ class SRTest(object):
         c0=[-1,1]*(nsite/2); random.shuffle(c0)
         cgen=RBMConfigGenerator(initial_config=c0,nflip=2)
         vmc=VMC(cgen,nbath=1000*nsite,nsample=10000*nsite,nmeasure=nsite,sampling_method='metropolis')
+
         E=vmc.measure(h,rbm)
+        print 'E/site = %s'%(E/nsite)
         assert_(abs(E/nsite+1.7738)<1e-3)
 
     def test_carleo(self):
@@ -55,7 +57,7 @@ class SRTest(object):
         fname='data/eng-%s-%s%s.dat'%(self.nsite,self.model,'p' if self.periodic else 'o')
         #generate a random rbm and the corresponding vector v
         self.rbm=random_rbm(nin=self.nsite,nhid=self.nsite,group=TIGroup(self.nsite) if self.periodic else NoGroup())
-        rbm,info=SR(self.h,self.rbm,handler=self.vmc,niter=600,reg_params=('carleo',{'lambda0':100,'b':0.9}),optimizer=DefaultOpt(0.01))
+        rbm,info=SR(self.h,self.rbm,handler=self.vmc,niter=600,reg_params=('carleo',{'lambda0':100,'b':0.9}),optimizer=lambda f,g,p: -0.1*0.95**p*g)
         #rbm,info=SR(self.h,self.rbm,handler=self.vmc,niter=200,reg_params=('trunc',{'lambda0':0.2,'eps_trunc':1e-3}))
         #rbm,info=SR(self.h,self.rbm,handler=self.vmc,niter=200,optimizer=RMSProp(rho=0.9,rate=0.001),reg_params=('trunc',{'lambda0':0.2,'eps_trunc':1e-3}))
         #rbm,info=SR(self.h,self.rbm,handler=self.vmc,niter=200,optimizer=RMSProp(rho=0.9,rate=0.001),reg_params=('carleo',{'b':0.9,'lambda0':100}))
@@ -87,7 +89,7 @@ def show_err_sr(nsite):
     savefig('data/err-%s.pdf'%nsite)
 
 if __name__=='__main__':
-    t=SRTest(nsite=16,periodic=True,model='AFH')
+    t=SRTest(nsite=16,periodic=False,model='AFH')
     #t.test_sample_carleo()
     t.test_carleo()
     #show_err_sr(nsite=4)

@@ -105,8 +105,10 @@ class RBMConfigGenerator(ConfigGenerator):
         Return:
             tuple, (new configuration, new theta table, <c'|Psi>/<c|Psi>).
         '''
-        _theta=copy(self.theta)
         rbm=self.state
+        return pop(config=self.config,flips=asarray(flips),W=rbm.W,a=rbm.a,theta=self.theta,ng=rbm.group.ng)
+
+        _theta=copy(self.theta)
         nj=rbm.W.shape[1]
         nsite=rbm.nin
 
@@ -125,22 +127,25 @@ class RBMConfigGenerator(ConfigGenerator):
 
     def fire(self):
         '''Fire a proposal.'''
-        rbm=self.state
-        nsite=rbm.nin
-        config=self.config
+        nsite=self.state.nin
         
         #generate a new config by flipping n spin
         if self.nflip==2:
-            flips=random.randint(0,nsite,2)
-            while flips[0]==flips[1]:
-                flips=random.randint(0,nsite,2)
+            #flips=random.randint(0,nsite,2)       #why this code is wrong?
+            #while flips[0]==flips[1]:
+                #flips=random.randint(0,nsite,2)
+            upmask=self.config==1
+            flips=random.randint(0,nsite/2,2)
+            iflip0=where(upmask)[0][flips[0]]
+            iflip1=where(~upmask)[0][flips[1]]
+            flips=array([iflip0,iflip1])
         else:
             iflip0=random.randint(nsite)
             flips=array([iflip0])
 
         #transfer probability is equal, pratio is equal to the probability ratio
-        self._theta,pop1=pop(config=self.config,flips=flips,W=rbm.W,a=rbm.a,theta=self.theta,ng=rbm.group.ng)
-        return flips,norm(pop1)**2
+        self._theta,pop1=self.pop(flips=flips)
+        return flips,abs(pop1)**2
 
     def reject(self,*args,**kwargs):
         #self._theta=None

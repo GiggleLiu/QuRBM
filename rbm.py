@@ -3,7 +3,7 @@ Restricted Boltzmann Machine.
 '''
 
 from numpy import *
-import numbers
+import numbers,pdb
 
 from sstate import SparseState
 from group import NoGroup
@@ -70,8 +70,8 @@ class RBM(object):
         '''
         nj=self.W.shape[1]
         hl=[]
-        for ig in xrange(self.group.ng):
-            vi=self.group.apply(v,ig)
+        vl=self.group.apply_all(v)
+        for vi in vl:
             hi=vi.dot(self.W)+self.b
             hl.append(hi)
         return concatenate(hl,axis=-1)
@@ -117,12 +117,25 @@ class RBM(object):
         if theta is None: theta=self.feed_input(config)
         return exp(asarray(config).dot(self.a))*prod(2*cosh(theta),axis=-1)
 
+    def dump_arr(self):
+        '''Dump values to an array.'''
+        return concatenate([self.a,self.b,self.W.ravel()])
+
+    def load_arr(self,v):
+        '''Load data from an array.'''
+        nb=self.nhid/self.group.ng
+        nin=self.nin
+        self.a[...]=v[:nin]
+        self.b[...]=v[nin:nin+nb]
+        self.W[...]=v[nin+nb:].reshape([nin,nb])
+
 def random_rbm(nin,nhid,group=NoGroup()):
     '''Get a random Restricted Boltzmann Machine'''
     if nhid%group.ng!=0: raise ValueError()
     nb=nhid/group.ng
     #data=(random.random(nin+nhid+nin*nhid/group.ng)-0.5)/2**nhid+1j*random.random(nin+nhid+nin*nhid/group.ng)-0.5j
     data=(random.random(nin+nb+nin*nb)-0.5)+1j*random.random(nin+nb+nin*nb)-0.5j
+    data/=1000.
     a=data[:nin]
     b=data[nin:nin+nb]
     W=data[nin+nb:].reshape([nin,nb])

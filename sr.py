@@ -11,9 +11,9 @@ from optimizer import DefaultOpt
 
 __all__=['SR','SD']
 
-def SR(H,rbm,handler,niter=200,optimizer=DefaultOpt(0.1),reg_params=('delta',{})):
+class SR(object):
     '''
-    Stochestic Reconfiguration.
+    Stochestic Reconfiguration optimization problem.
 
     Attributes:
         :H: LinOp, Hamiltonian.
@@ -26,23 +26,32 @@ def SR(H,rbm,handler,niter=200,optimizer=DefaultOpt(0.1),reg_params=('delta',{})
             * 'delta' -> S_{kk'}^{reg} = S_{kk'} + \lambda_0 \delta_{kk'}
             * 'trunc' -> carleo's approach S_{kk}*(1+lambda0), diacarding near singular values (s/s_max < eps_trunc).
             * 'pinv'  -> use pseudo inverse instead.
+            * 'identity' -> equivalence to SD.
     '''
-    q=OpQueue((PartialW(),H),(lambda a,b:a[...,newaxis].conj()*a,lambda a,b:a.conj()*b))
-    reg_method,reg_var=reg_params
-    nb=rbm.nhid/rbm.group.ng
-    info={}
-    info['opl']=[]
-    for p in xrange(niter):
-        print '#'*20+' ITERATION %s '%p+'#'*20
-        ops=handler.measure(q,rbm,tol=0); info['opl'].append(ops)
-        OPW,OH,OPW2,OPWH=ops
+    def __init__(self,H,rbm,handler,reg_params=('delta',{})):
+        self.H=H
+        self.rbm=rbm
+        self.handler=handler
+        self.reg_params=reg_params
+        self._opq=OpQueue((PartialW(),H),(lambda a,b:a[...,newaxis].conj()*a,lambda a,b:a.conj()*b))
+        self._opq_vals=None
+        self._counter=0
+
+    def compute_gradient(self,v):
+        reg_method,reg_var=self.reg_params
+        #update RBM
+        self.rbm.load_arr(v)
+
+        #perform measurements
+        self._opq_vals=self.handler.measure(self._opq,self.rbm,tol=0)
+        OPW,OH,OPW2,OPWH=self._opq_vals
         S=OPW2-OPW[:,newaxis].conj()*OPW
         F=OPWH-OPW.conj()*OH
 
         #regularize S matrix to get Sinv.
         if reg_method=='carleo':
             lambda0,b=reg_var.get('lambda0',100),reg_var.get('b',0.9)
-            lamb=max(lambda0*b**p,1e-4)
+            lamb=max(lambda0*b**self._counter,1e-4)
             fill_diagonal(S,S.diagonal()*(1+lamb))
             Sinv=inv(S)
         elif reg_method=='delta':
@@ -58,20 +67,16 @@ def SR(H,rbm,handler,niter=200,optimizer=DefaultOpt(0.1),reg_params=('delta',{})
             Sinv=(U/L[kpmask]).dot(U.T.conj())
         elif reg_method=='pinv':
             Sinv=pinv(S)
+        elif reg_method=='identity':
+            Sinv=identity(len(S))
         else:
             raise ValueError()
-        #g=gamma if not hasattr(gamma,'__call__') else gamma(p)
-        #ds=g*Sinv.dot(F)
-        ds=optimizer(1,Sinv.dot(F))  #decide the move according to the gradient
-        rbm.a+=ds[:rbm.nin]
-        rbm.b+=ds[rbm.nin:rbm.nin+nb]
-        rbm.W+=ds[rbm.nin+nb:].reshape(rbm.W.shape)
-        print 'Energy/site = %s'%(OH/rbm.nin)
-    return rbm,info
+        self._counter+=1
+        return Sinv.dot(F)
 
 def SD(H,rbm,handler,niter=200,optimizer=DefaultOpt(0.03)):
     '''
-    Stochestic Reconfiguration.
+    Steepest descend.
 
     Attributes:
         :H: LinOp, Hamiltonian.
@@ -87,10 +92,10 @@ def SD(H,rbm,handler,niter=200,optimizer=DefaultOpt(0.03)):
     for p in xrange(niter):
         print '#'*20+' ITERATION %s '%p+'#'*20
         ops=handler.measure(q,rbm,tol=0); info['opl'].append(ops)
-        OPW,OH,OPWH=ops
+        OPW,OH,OPWH=ops; OH=OH.real
         F=OPWH-OPW.conj()*OH
 
-        ds=optimizer(1,F)  #decide the move according to the gradient
+        ds=optimizer(OH,F,p)  #decide the move according to the gradient
         rbm.a+=ds[:rbm.nin]
         rbm.b+=ds[rbm.nin:rbm.nin+nb]
         rbm.W+=ds[rbm.nin+nb:].reshape(rbm.W.shape)

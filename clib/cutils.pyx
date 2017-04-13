@@ -1,6 +1,6 @@
 cimport cython
 cimport numpy as np
-import numpy
+import time
 
 ctypedef np.complex128_t complex_t
 ctypedef np.int_t int_t
@@ -21,14 +21,14 @@ def lncosh(complex_t x):
 @cython.boundscheck(False) # turn off bounds-checking for entire function
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
 def pop(np.ndarray[int_t,ndim=1,mode='c'] config not None,
-        np.ndarray[int_t,ndim=1,mode='c'] flips not None,
+        np.ndarray[int_t,ndim=1,mode='c'] flips,
         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
         np.ndarray[complex_t,ndim=1,mode='c'] a not None,
         np.ndarray[complex_t,ndim=1,mode='c'] theta not None,int ng):
     cdef int nv=W.shape[0]
     cdef int nf=W.shape[1]  #number of features.
 
-    cdef int ig,iflip,ci
+    cdef int ig,iflip,ci,i
     cdef np.ndarray[complex_t,ndim=1,mode='c'] _theta=theta.copy()
     cdef complex_t pratio=0
     cdef complex_t th
@@ -36,10 +36,10 @@ def pop(np.ndarray[int_t,ndim=1,mode='c'] config not None,
 
     for iflip in flips:
         ci=config[iflip]
-        for ig in xrange(ng):
+        for ig in range(ng):
             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
         pratio-=2*config[iflip]*a[iflip]
-    for th,_th in zip(theta,_theta):
-        pratio+=lncoshc(_th)-lncoshc(th)
+    for i in range(theta.shape[0]):
+        pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
     pratio=exp(pratio)
     return _theta,pratio
