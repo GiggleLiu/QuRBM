@@ -28,6 +28,9 @@ class SRTest(object):
         self.model=model
         if model=='AFH':
             self.h=HeisenbergH(nsite=nsite,J=-1.,Jz=1.,periodic=periodic)
+        elif model=='AFH2D':
+            N=int(sqrt(nsite))
+            self.h=HeisenbergH2D(N,N,J=-1.,Jz=1.,periodic=periodic)
         elif model=='TFI':
             self.h=TFI(nsite=nsite,Jz=-4.,h=-1.,periodic=periodic)
         else:
@@ -41,7 +44,9 @@ class SRTest(object):
 
     def test_sample_carleo(self):
         from utils import load_carleo_wf
-        rbm=RBM(*load_carleo_wf('test.wf'))
+        nsite=40
+        group=TIGroup([nsite])
+        rbm=RBM(*load_carleo_wf('test.wf',group=group),group=group)
         nsite=rbm.nin
         h=HeisenbergH(nsite=nsite,J=-4.,Jz=4.,periodic=True)
         c0=[-1,1]*(nsite/2); random.shuffle(c0)
@@ -51,6 +56,25 @@ class SRTest(object):
         E=vmc.measure(h,rbm)
         print 'E/site = %s'%(E/nsite)
         assert_(abs(E/nsite+1.7738)<1e-3)
+
+    def test_sample_carleo2D(self):
+        from utils import load_carleo_wf
+        nsite=100
+        #group=TIGroup([10,10])
+        group=NoGroup()
+        rbm=RBM(*load_carleo_wf('test2d.wf',group=group),group=group)
+        #order=arange(rbm.nin); random.shuffle(order)
+        #rbm.W=roll(rbm.W.reshape([10,10,100]),3,axis=1).reshape([100,100])
+        pdb.set_trace()
+        nsite=rbm.nin
+        h=HeisenbergH2D(10,10,J=-4.,Jz=4.,periodic=True)
+        c0=[-1,1]*(nsite/2); random.shuffle(c0)
+        cgen=RBMConfigGenerator(initial_config=c0,nflip=2)
+        vmc=VMC(cgen,nbath=100*nsite,nsample=1000*nsite,nmeasure=nsite,sampling_method='metropolis')
+
+        E=vmc.measure(h,rbm)
+        print 'E/site = %s'%(E/nsite)
+        assert_(abs(E/nsite+2.666)<2e-3)
 
     def test_carleo(self):
         el=[]
@@ -91,5 +115,6 @@ def show_err_sr(nsite):
 if __name__=='__main__':
     t=SRTest(nsite=16,periodic=False,model='AFH')
     #t.test_sample_carleo()
-    t.test_carleo()
+    t.test_sample_carleo2D()
+    #t.test_carleo()
     #show_err_sr(nsite=4)

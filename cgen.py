@@ -119,14 +119,17 @@ class RBMConfigGenerator(ConfigGenerator):
         #update new theta table
         cflip=self.config[flips]
         for ig in xrange(rbm.group.ng):
-            for iflip in flips:
-                _theta[ig*nj:(ig+1)*nj]-=2*cflip*rbm.W[rbm.group.ind_apply(iflip,-ig)%nsite]  #-ig is corrent!
+            for i,iflip in enumerate(flips):
+                _theta[ig*nj:(ig+1)*nj]-=2*cflip[i]*rbm.W[rbm.group.ind_apply(iflip,-ig)%nsite]  #-ig is corrent!
         t1=time.time()
 
-        pratio_=exp(2*sum([-cflip*rbm.a[rbm.group.ind_apply(flips,-ig)%nsite] for ig in xrange(rbm.group.ng)],axis=0).sum()+sum(logcosh(_theta)-logcosh(self.theta)))
-        print abs(_theta-_theta).sum()
-        #nc=copy(self.config); nc[flips]*=-1
-        #pratio_=rbm.get_weight(nc)/rbm.get_weight(asarray(self.config))
+        pratio=exp(2*sum([-cflip*rbm.a[rbm.group.ind_apply(flips,-ig)%nsite] for ig in xrange(rbm.group.ng)],axis=0).sum()+sum(logcosh(_theta)-logcosh(self.theta)))
+        nc=copy(self.config); nc[flips]*=-1
+        _theta_true=rbm.feed_input(nc)
+        pratio_true=rbm.get_weight(nc)/rbm.get_weight(asarray(self.config))
+        print _theta_true-_theta0,_theta_true-_theta
+        print pratio_true-pratio0,pratio_true-pratio
+        pdb.set_trace()
         return _theta,pratio
 
     def fire(self):

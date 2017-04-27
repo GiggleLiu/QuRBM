@@ -109,12 +109,12 @@ class TIGroup(RBMGroup):
 
     def _iterate_apply(self,config,iaxis):
         gdim=len(self.ngs)
-        if iaxis==len(self.ngs)-1:
-            cdim=ndim(config)
-            raxis=cdim-gdim+iaxis
+        cdim=ndim(config)
+        raxis=cdim-gdim+iaxis
+        if iaxis==gdim-1:
             return array([roll(config,ig,axis=raxis).reshape(config.shape[:-gdim]+(-1,)) for ig in xrange(self.ngs[iaxis])])
         else:
-            return concatenate([self._iterate_apply(roll(config,ig,axis=iaxis),iaxis+1) for ig in xrange(self.ngs[iaxis])],axis=0)
+            return concatenate([self._iterate_apply(roll(config,ig,axis=raxis),iaxis+1) for ig in xrange(self.ngs[iaxis])],axis=0)
 
     def apply_all(self,config):
         if len(self.ngs)>1:

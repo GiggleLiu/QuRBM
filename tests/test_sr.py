@@ -59,7 +59,9 @@ class SRTest(object):
         #optimizer=Adam(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=1e-2)
         optimizer=GradientDescent(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=2e-2,momentum=0.)
         arr_old=self.rbm.dump_arr()
+        self.rbm.a[...]=0
         for k,info in enumerate(optimizer):
+            self.rbm.a[...]=0
             print 'Running %s-th Iteration.'%k
             optimizer.step_rate=0.3*0.96**k
             v=self.rbm.tovec(self.scfg); v=v/norm(v)
@@ -80,7 +82,6 @@ class SRTest(object):
         fname='data/eng-%s-%s%s.dat'%(self.nsite,self.model,'p' if self.periodic else 'o')
         #generate a random rbm and the corresponding vector v
         group=(TIGroup(self.nsite if not isinstance(self.h,HeisenbergH2D) else 2*[int(sqrt(self.nsite))])) if self.periodic else NoGroup()
-        #group=(TIGroup(self.nsite if not isinstance(self.h,HeisenbergH2D) else 2*[int(sqrt(self.nsite))])) if False else NoGroup()
         self.rbm=random_rbm(nin=self.nsite,nhid=self.nsite,group=group)
         self.rbm.var_mask=[False,True,True]
 
@@ -111,6 +112,7 @@ class SRTest(object):
             print 'diff rate = %s(norm=%s)'%(norm(arr-arr_old)/norm(arr_old),norm(arr_old))
             arr_old=arr
         savetxt(fname,el)
+        assert_(err<0.05)
 
 def show_err_sr(nsite):
     from matplotlib.pyplot import plot,ion

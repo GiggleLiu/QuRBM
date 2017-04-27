@@ -29,15 +29,19 @@ def analyse_sampling(configs,rbm):
     pdb.set_trace()
 
 class VMCTest(object):
-    def __init__(self):
+    def __init__(self,model='AFH'):
         self.nsite=4
         #construct operator H act on config
-        self.h=HeisenbergH(nsite=self.nsite,J=1.,periodic=True)
+        if model=='AFH':
+            self.h=HeisenbergH(nsite=self.nsite,J=1.,periodic=True)
+        elif model=='AFH2D':
+            N=int(sqrt(self.nsite))
+            self.h=HeisenbergH2D(N,N,J=-4.,Jz=2.,periodic=True)
 
         #generate a rbm and the corresponding vector v
         self.rbm=RBM(a=[0.1,0.2j,0.3,-0.5],b=[-0.1,0.2,0.,-0.5j],W=kron(sx,sx)+kron(sy,sy))
         self.rbm_g=RBM(a=[0.1,0.2j,0.3,-0.5],b=[-0.5j],\
-                W=reshape([0.3,-0.2,0.4j,0.1],[self.nsite,1]),group=TIGroup(self.nsite))
+                W=reshape([0.3,-0.2,0.4j,0.1],[self.nsite,1]),group=TIGroup([self.nsite] if model!='AFH2D' else [N,N]))
 
         #vmc config
         cgen=RBMConfigGenerator(nflip=2,initial_config=array([-1,1]*2))
@@ -90,7 +94,8 @@ class VMCTest(object):
                 #assert_(err<0.1)
 
 if __name__=='__main__':
-    t=VMCTest()
+    t=VMCTest(model='AFH2D')
+    t.test_measureh()
+    pdb.set_trace()
     t.test_measureq()
     t.test_measurepw()
-    t.test_measureh()

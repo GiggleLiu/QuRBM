@@ -120,6 +120,7 @@ class HeisenbergH2D(LinOp):
             nn_par2=nn_par2[:,:-1]
         wl.append(self.Jz/4.*(nn_par1.sum()+nn_par2.sum()))
         flips.append(array([],dtype='int64'))
+        #return wl,flips
 
         #bond in 1st direction
         mask1=nn_par1!=1
@@ -204,7 +205,6 @@ class FakeVMC(object):
                     #H=H+Ji/4.*kron(kron(kron(kron(eye(2**(lattice.nsite-b.atom2-1)),ss),eye(2**(b.atom2-b.atom1-1))),ss),eye(2**(b.atom1)))
             #e,v=eigsh(H,k=1,which='SA')
             #print e/lattice.nsite
-            #pdb.set_trace()
             return H
 
     def project_vec(self,vec,m=0):
@@ -221,10 +221,10 @@ class FakeVMC(object):
         scfg=self.scfg
         #prepair state
         v=state.tovec(scfg)
-        if isinstance(self.h,HeisenbergH): v=self.project_vec(v,0)
+        if isinstance(self.h,(HeisenbergH,HeisenbergH2D)): v=self.project_vec(v,0)
         v/=norm(v)
 
-        if isinstance(op,(HeisenbergH,TFI)):
+        if isinstance(op,(HeisenbergH,TFI,HeisenbergH2D)):
             return v.conj().dot(H).dot(v)
         elif isinstance(op,PartialW):
             configs=1-2*scfg.ind2config(arange(scfg.hndim))
