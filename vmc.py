@@ -3,7 +3,6 @@ Variational Monte Carlo Kernel.
 '''
 
 from numpy import *
-from profilehooks import profile
 import pdb
 
 from linop import c_sandwich,OpQueue

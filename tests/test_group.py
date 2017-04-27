@@ -24,7 +24,10 @@ def test_group():
     g=TIGroup([2,3])
     assert_allclose(g.apply(config,4),[6,4,5,3,1,2])
     assert_allclose(g.apply(g.apply(config,4),-4),config)
-    assert_allclose(g.apply_all(config),[[1,2,3,4,5,6],
+    res1=[g.apply(config,ig) for ig in xrange(g.ng)]
+    res2=g.apply_all(config)
+    assert_allclose(res1,res2)
+    assert_allclose(res2,[[1,2,3,4,5,6],
         [3,1,2,6,4,5],
         [2,3,1,5,6,4],
         [4,5,6,1,2,3],

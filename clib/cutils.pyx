@@ -20,7 +20,7 @@ def lncosh(complex_t x):
 
 @cython.boundscheck(False) # turn off bounds-checking for entire function
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
-def pop(np.ndarray[int_t,ndim=1,mode='c'] config not None,
+def pop1D(np.ndarray[int_t,ndim=1,mode='c'] config not None,
         np.ndarray[int_t,ndim=1,mode='c'] flips,
         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
         np.ndarray[complex_t,ndim=1,mode='c'] a not None,
@@ -33,12 +33,54 @@ def pop(np.ndarray[int_t,ndim=1,mode='c'] config not None,
     cdef complex_t pratio=0
     cdef complex_t th
     cdef complex_t _th
+    cdef complex_t sa=a.sum()
 
     for iflip in flips:
         ci=config[iflip]
         for ig in range(ng):
             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
-        pratio-=2*config[iflip]*a[iflip]
+        if ng==config.shape[0]:
+            pratio-=2*config[iflip]*sa
+        elif ng==1:
+            pratio-=2*config[iflip]*a[iflip]
+        else:
+            raise ValueError
+    for i in range(theta.shape[0]):
+        pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
+    pratio=exp(pratio)
+    return _theta,pratio
+
+@cython.boundscheck(False) # turn off bounds-checking for entire function
+@cython.wraparound(False)  # turn off negative index wrapping for entire function
+def pop2D(np.ndarray[int_t,ndim=1,mode='c'] config not None,
+        np.ndarray[int_t,ndim=1,mode='c'] flips,
+        np.ndarray[complex_t,ndim=2,mode='c'] W not None,
+        np.ndarray[complex_t,ndim=1,mode='c'] a not None,
+        np.ndarray[complex_t,ndim=1,mode='c'] theta not None,
+        np.ndarray[int_t,ndim=1,mode='c'] ngs not None):
+    cdef int nv=W.shape[0]
+    cdef int nf=W.shape[1]  #number of features.
+
+    cdef int ig,iflip,ci,i,ig1,ig2,ng1=ngs[0],ng2=ngs[1],ng=ng1*ng2
+    cdef np.ndarray[complex_t,ndim=1,mode='c'] _theta=theta.copy()
+    cdef complex_t pratio=0
+    cdef complex_t th
+    cdef complex_t _th
+    cdef complex_t sa=a.sum()
+
+    for iflip in flips:
+        ci=config[iflip]
+        for ig1 in range(ng1):
+            for ig2 in range(ng2):
+                ig=ig1*ng2+ig2
+                iflip1,iflip2=iflip/ng2,iflip%ng2
+                _theta[ig*nf:(ig+1)*nf]-=2*ci*W[((iflip1+ig1)%ng1)*ng2+(iflip2+ig2)%ng2]
+        if ng==config.shape[0]:
+            pratio-=2*config[iflip]*sa
+        elif ng==1:
+            pratio-=2*config[iflip]*a[iflip]
+        else:
+            raise ValueError
     for i in range(theta.shape[0]):
         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
     pratio=exp(pratio)

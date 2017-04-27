@@ -33,7 +33,7 @@ class TestLinop(object):
         self.rbm=random_rbm(nin=nsite,nhid=nsite)
         self.v=self.rbm.tovec(self.scfg)
 
-        self.rbm_g=random_rbm(nin=nsite,nhid=nsite,group=TIGroup(2))
+        self.rbm_g=random_rbm(nin=nsite,nhid=nsite,group=TIGroup(4))
         self.v_g=self.rbm_g.tovec(self.scfg)
 
     def test_sandwichh(self):

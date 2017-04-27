@@ -40,6 +40,19 @@ class RBMGroup(object):
         '''
         pass
 
+    @abstractmethod
+    def apply_all(self,config):
+        '''
+        Apply all group operation to form a list of configurations.
+
+        Parameters:
+            :config: ndarray,
+
+        Return:
+            ndarray, new configs.
+        '''
+        pass
+
 class NoGroup(RBMGroup):
     def __str__(self):
         return 'NoGroup'
@@ -49,6 +62,9 @@ class NoGroup(RBMGroup):
 
     def ind_apply(self,ind,ig):
         return ind
+
+    def apply_all(self,config):
+        return array([config])
 
     @property
     def ng(self):
@@ -89,16 +105,16 @@ class TIGroup(RBMGroup):
         gdim,cdim=len(self.ngs),ndim(config)
         for i,igi in enumerate(igs):
             config=roll(config,igi,axis=cdim-gdim+i)
-        return config.ravel()
+        return config.reshape(config.shape[:-gdim]+(-1,))
 
     def _iterate_apply(self,config,iaxis):
         gdim=len(self.ngs)
-        if iaxis==len(self.ngs)-1:
-            cdim=ndim(config)
-            raxis=cdim-gdim+iaxis
+        cdim=ndim(config)
+        raxis=cdim-gdim+iaxis
+        if iaxis==gdim-1:
             return array([roll(config,ig,axis=raxis).reshape(config.shape[:-gdim]+(-1,)) for ig in xrange(self.ngs[iaxis])])
         else:
-            return concatenate([self._iterate_apply(roll(config,ig,axis=iaxis),iaxis+1) for ig in xrange(self.ngs[iaxis])],axis=0)
+            return concatenate([self._iterate_apply(roll(config,ig,axis=raxis),iaxis+1) for ig in xrange(self.ngs[iaxis])],axis=0)
 
     def apply_all(self,config):
         if len(self.ngs)>1:

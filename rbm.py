@@ -115,7 +115,7 @@ class RBM(object):
         '''
         group=self.group
         if theta is None: theta=self.feed_input(config)
-        return exp(asarray(config).dot(self.a))*prod(2*cosh(theta),axis=-1)
+        return exp(sum([group.apply(asarray(config),ig).dot(self.a) for ig in xrange(group.ng)],axis=0))*prod(2*cosh(theta),axis=-1)
 
     def dump_arr(self):
         '''Dump values to an array.'''
@@ -134,8 +134,9 @@ def random_rbm(nin,nhid,group=NoGroup()):
     if nhid%group.ng!=0: raise ValueError()
     nb=nhid/group.ng
     #data=(random.random(nin+nhid+nin*nhid/group.ng)-0.5)/2**nhid+1j*random.random(nin+nhid+nin*nhid/group.ng)-0.5j
-    data=(random.random(nin+nb+nin*nb)-0.5)+1j*random.random(nin+nb+nin*nb)-0.5j
-    data/=1000.
+    data=(random.random(nin+nb+nin*nb)-0.5)/100+0.1j*random.random(nin+nb+nin*nb)*pi
+    #data=(random.random(nin+nb+nin*nb)-0.5)+1j*random.random(nin+nb+nin*nb)-0.5j
+    #data/=nin
     a=data[:nin]
     b=data[nin:nin+nb]
     W=data[nin+nb:].reshape([nin,nb])

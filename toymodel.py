@@ -3,6 +3,8 @@
 from numpy import *
 from numpy.linalg import norm
 import pdb
+#from scipy.sparse import csr_matrix,kron,eye
+#from scipy.sparse.linalg import eigsh
 
 from tba.hgen import SpinSpaceConfig,sx,sy,sz
 from linop import *
@@ -118,6 +120,7 @@ class HeisenbergH2D(LinOp):
             nn_par2=nn_par2[:,:-1]
         wl.append(self.Jz/4.*(nn_par1.sum()+nn_par2.sum()))
         flips.append(array([],dtype='int64'))
+        #return wl,flips
 
         #bond in 1st direction
         mask1=nn_par1!=1
@@ -191,10 +194,17 @@ class FakeVMC(object):
             b1s=lattice.getbonds(1)
             b1s=[b for b in b1s if b.atom1<b.atom2]
             H=0
+            if False:
+                sx0=csr_matrix(sx)
+                sy0=csr_matrix(sy)
+                sz0=csr_matrix(sz)
+            sx0,sy0,sz0=sx,sy,sz
             for b in b1s:
-                for ss,Ji in zip([sx,sy,sz],[J,J,Jz]):
+                for ss,Ji in zip([sx0,sy0,sz0],[J,J,Jz]):
                     H=H+Ji/4.*kron(kron(kron(kron(eye(2**b.atom1),ss),eye(2**(b.atom2-b.atom1-1))),ss),eye(2**(lattice.nsite-b.atom2-1)))
                     #H=H+Ji/4.*kron(kron(kron(kron(eye(2**(lattice.nsite-b.atom2-1)),ss),eye(2**(b.atom2-b.atom1-1))),ss),eye(2**(b.atom1)))
+            #e,v=eigsh(H,k=1,which='SA')
+            #print e/lattice.nsite
             return H
 
     def project_vec(self,vec,m=0):
@@ -211,10 +221,10 @@ class FakeVMC(object):
         scfg=self.scfg
         #prepair state
         v=state.tovec(scfg)
-        if isinstance(self.h,HeisenbergH): v=self.project_vec(v,0)
+        if isinstance(self.h,(HeisenbergH,HeisenbergH2D)): v=self.project_vec(v,0)
         v/=norm(v)
 
-        if isinstance(op,(HeisenbergH,TFI)):
+        if isinstance(op,(HeisenbergH,TFI,HeisenbergH2D)):
             return v.conj().dot(H).dot(v)
         elif isinstance(op,PartialW):
             configs=1-2*scfg.ind2config(arange(scfg.hndim))

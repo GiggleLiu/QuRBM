@@ -36,14 +36,14 @@ def test_model1():
         assert_allclose(vec,v_true)
 
 def test_model2():
-    J=1.
+    J,Jz=-3.,2
     N1,N2=2,3
     scfg=SpinSpaceConfig([N1*N2,2])
-    config=array([1,1,0,0,1,0])
+    config=array([1,1,0,1,1,0])
     #config=array([1,1,0,0,1,0,1,1,0])
     #construct true H
     for periodic in [True,False]:
-        h=HeisenbergH2D(N1,N2,periodic=periodic)
+        h=HeisenbergH2D(N1,N2,J=J,Jz=Jz,periodic=periodic)
         H=FakeVMC(h).get_H()
         print 'Testing rmatmul of Hamiltonian(%s)'%('PBC' if periodic else 'OBC')
         wl,flips=h._rmatmul(1-2*config)

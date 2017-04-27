@@ -5,11 +5,10 @@ Utilities.
 from numpy import *
 import pdb
 
-def load_carleo_wf(filename):
+def load_carleo_wf(filename,group=None):
     '''Load wavefunction of carleo's program.'''
-    f=open(filename,'r')
-    fl=f.readlines()
-    f.close()
+    with open(filename,'r') as f:
+        fl=f.readlines()
     nv=int(fl[0].strip('\n'))
     nh=int(fl[1].strip('\n'))
     datas=array([fromstring(s.strip('()\n'),sep=',') for s in fl[2:]])
@@ -17,6 +16,9 @@ def load_carleo_wf(filename):
     a=datas[:nv]
     b=datas[nv:nv+nh]
     W=datas[nv+nh:].reshape(nv,nh)
+    if group is not None or group.ng==1:
+        b=b[:nh/group.ng]
+        W=ascontiguousarray(W[:,:nh/group.ng])
     return a,b,W
 
 def logcosh(theta):

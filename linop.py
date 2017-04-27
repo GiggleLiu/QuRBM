@@ -31,7 +31,7 @@ class PartialW(LinOp):
         state=cgen.state
         partialS=[]
         #get partial ai
-        partialS.append(config)
+        partialS.append(sum(state.group.apply_all(config),axis=0))
         #get partial bj
         partialS.append(tanh(theta).reshape([state.group.ng,len(state.b)]).sum(axis=0))
         #get partial Wij
