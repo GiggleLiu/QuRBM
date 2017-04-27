@@ -18,7 +18,7 @@ class RBMTest(object):
         self.rbm=RBM(a,b,W)
 
         #translational invariant group
-        tig=TIGroup(ng=2)
+        tig=TIGroup(ngs=[2])
         self.rbm_t=RBM(a,b2,W,group=tig)
 
         #get vec in the brute force way.
@@ -47,7 +47,7 @@ class RBMTest(object):
             for j in xrange(scfg2.hndim):
                 config2=scfg2.ind2config(j)
                 h=1-2*config2
-                vi+=exp((s*a).sum()+(h*concatenate([b2,b2])).sum()+s.dot(W).dot(h[:3])+s[::-1].dot(W).dot(h[3:]))
+                vi+=exp((s*a).sum()+(s[::-1]*a).sum()+(h*concatenate([b2,b2])).sum()+s.dot(W).dot(h[:3])+s[::-1].dot(W).dot(h[3:]))
             self.vec2.append(vi)
         self.vec2=array(self.vec2)
 

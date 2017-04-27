@@ -997,6 +997,13 @@ static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject 
 /* RaiseException.proto */
 static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb, PyObject *cause);
 
+/* None.proto */
+static CYTHON_INLINE int __Pyx_div_int(int, int);
+
+/* UnaryNegOverflows.proto */
+#define UNARY_NEG_WOULD_OVERFLOW(x)\
+        (((x) < 0) & ((unsigned long)(x) == 0-(unsigned long)(x)))
+
 /* DictGetItem.proto */
 #if PY_MAJOR_VERSION >= 3 && !CYTHON_COMPILING_IN_PYPY
 static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key) {
@@ -1278,8 +1285,14 @@ static const char __pyx_k_ig[] = "ig";
 static const char __pyx_k_nf[] = "nf";
 static const char __pyx_k_ng[] = "ng";
 static const char __pyx_k_nv[] = "nv";
+static const char __pyx_k_sa[] = "sa";
 static const char __pyx_k_th[] = "th";
-static const char __pyx_k_pop[] = "pop";
+static const char __pyx_k_ig1[] = "ig1";
+static const char __pyx_k_ig2[] = "ig2";
+static const char __pyx_k_ng1[] = "ng1";
+static const char __pyx_k_ng2[] = "ng2";
+static const char __pyx_k_ngs[] = "ngs";
+static const char __pyx_k_sum[] = "sum";
 static const char __pyx_k_copy[] = "copy";
 static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_test[] = "__test__";
@@ -1287,10 +1300,14 @@ static const char __pyx_k_th_2[] = "_th";
 static const char __pyx_k_time[] = "time";
 static const char __pyx_k_flips[] = "flips";
 static const char __pyx_k_iflip[] = "iflip";
+static const char __pyx_k_pop1D[] = "pop1D";
+static const char __pyx_k_pop2D[] = "pop2D";
 static const char __pyx_k_range[] = "range";
 static const char __pyx_k_theta[] = "theta";
 static const char __pyx_k_config[] = "config";
 static const char __pyx_k_cutils[] = "cutils";
+static const char __pyx_k_iflip1[] = "iflip1";
+static const char __pyx_k_iflip2[] = "iflip2";
 static const char __pyx_k_import[] = "__import__";
 static const char __pyx_k_lncosh[] = "lncosh";
 static const char __pyx_k_pratio[] = "pratio";
@@ -1319,7 +1336,11 @@ static PyObject *__pyx_n_s_flips;
 static PyObject *__pyx_kp_s_home_leo_pycode_rbm_clib_cutils;
 static PyObject *__pyx_n_s_i;
 static PyObject *__pyx_n_s_iflip;
+static PyObject *__pyx_n_s_iflip1;
+static PyObject *__pyx_n_s_iflip2;
 static PyObject *__pyx_n_s_ig;
+static PyObject *__pyx_n_s_ig1;
+static PyObject *__pyx_n_s_ig2;
 static PyObject *__pyx_n_s_import;
 static PyObject *__pyx_n_s_lncosh;
 static PyObject *__pyx_n_s_main;
@@ -1327,10 +1348,16 @@ static PyObject *__pyx_kp_u_ndarray_is_not_C_contiguous;
 static PyObject *__pyx_kp_u_ndarray_is_not_Fortran_contiguou;
 static PyObject *__pyx_n_s_nf;
 static PyObject *__pyx_n_s_ng;
+static PyObject *__pyx_n_s_ng1;
+static PyObject *__pyx_n_s_ng2;
+static PyObject *__pyx_n_s_ngs;
 static PyObject *__pyx_n_s_nv;
-static PyObject *__pyx_n_s_pop;
+static PyObject *__pyx_n_s_pop1D;
+static PyObject *__pyx_n_s_pop2D;
 static PyObject *__pyx_n_s_pratio;
 static PyObject *__pyx_n_s_range;
+static PyObject *__pyx_n_s_sa;
+static PyObject *__pyx_n_s_sum;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_n_s_th;
 static PyObject *__pyx_n_s_th_2;
@@ -1341,7 +1368,8 @@ static PyObject *__pyx_kp_u_unknown_dtype_code_in_numpy_pxd;
 static PyObject *__pyx_n_s_x;
 static PyObject *__pyx_n_s_y;
 static PyObject *__pyx_pf_6cutils_lncosh(CYTHON_UNUSED PyObject *__pyx_self, __pyx_t_double_complex __pyx_v_x); /* proto */
-static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_config, PyArrayObject *__pyx_v_flips, PyArrayObject *__pyx_v_W, PyArrayObject *__pyx_v_a, PyArrayObject *__pyx_v_theta, int __pyx_v_ng); /* proto */
+static PyObject *__pyx_pf_6cutils_2pop1D(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_config, PyArrayObject *__pyx_v_flips, PyArrayObject *__pyx_v_W, PyArrayObject *__pyx_v_a, PyArrayObject *__pyx_v_theta, int __pyx_v_ng); /* proto */
+static PyObject *__pyx_pf_6cutils_4pop2D(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_config, PyArrayObject *__pyx_v_flips, PyArrayObject *__pyx_v_W, PyArrayObject *__pyx_v_a, PyArrayObject *__pyx_v_theta, PyArrayObject *__pyx_v_ngs); /* proto */
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info); /* proto */
 static PyObject *__pyx_tuple_;
@@ -1352,8 +1380,10 @@ static PyObject *__pyx_tuple__5;
 static PyObject *__pyx_tuple__6;
 static PyObject *__pyx_tuple__7;
 static PyObject *__pyx_tuple__9;
+static PyObject *__pyx_tuple__11;
 static PyObject *__pyx_codeobj__8;
 static PyObject *__pyx_codeobj__10;
+static PyObject *__pyx_codeobj__12;
 
 /* "cutils.pyx":14
  *     complex_t exp(complex_t x)
@@ -1440,15 +1470,15 @@ static PyObject *__pyx_pf_6cutils_lncosh(CYTHON_UNUSED PyObject *__pyx_self, __p
 /* "cutils.pyx":23
  * @cython.boundscheck(False) # turn off bounds-checking for entire function
  * @cython.wraparound(False)  # turn off negative index wrapping for entire function
- * def pop(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
+ * def pop1D(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
  *         np.ndarray[int_t,ndim=1,mode='c'] flips,
  *         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_6cutils_3pop(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_6cutils_3pop = {"pop", (PyCFunction)__pyx_pw_6cutils_3pop, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_6cutils_3pop(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_6cutils_3pop1D(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_6cutils_3pop1D = {"pop1D", (PyCFunction)__pyx_pw_6cutils_3pop1D, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_6cutils_3pop1D(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyArrayObject *__pyx_v_config = 0;
   PyArrayObject *__pyx_v_flips = 0;
   PyArrayObject *__pyx_v_W = 0;
@@ -1457,7 +1487,7 @@ static PyObject *__pyx_pw_6cutils_3pop(PyObject *__pyx_self, PyObject *__pyx_arg
   int __pyx_v_ng;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("pop (wrapper)", 0);
+  __Pyx_RefNannySetupContext("pop1D (wrapper)", 0);
   {
     static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_config,&__pyx_n_s_flips,&__pyx_n_s_W,&__pyx_n_s_a,&__pyx_n_s_theta,&__pyx_n_s_ng,0};
     PyObject* values[6] = {0,0,0,0,0,0};
@@ -1482,31 +1512,31 @@ static PyObject *__pyx_pw_6cutils_3pop(PyObject *__pyx_self, PyObject *__pyx_arg
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_flips)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("pop", 1, 6, 6, 1); __PYX_ERR(0, 23, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("pop1D", 1, 6, 6, 1); __PYX_ERR(0, 23, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_W)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("pop", 1, 6, 6, 2); __PYX_ERR(0, 23, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("pop1D", 1, 6, 6, 2); __PYX_ERR(0, 23, __pyx_L3_error)
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_a)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("pop", 1, 6, 6, 3); __PYX_ERR(0, 23, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("pop1D", 1, 6, 6, 3); __PYX_ERR(0, 23, __pyx_L3_error)
         }
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_theta)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("pop", 1, 6, 6, 4); __PYX_ERR(0, 23, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("pop1D", 1, 6, 6, 4); __PYX_ERR(0, 23, __pyx_L3_error)
         }
         case  5:
         if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_ng)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("pop", 1, 6, 6, 5); __PYX_ERR(0, 23, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("pop1D", 1, 6, 6, 5); __PYX_ERR(0, 23, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "pop") < 0)) __PYX_ERR(0, 23, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "pop1D") < 0)) __PYX_ERR(0, 23, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 6) {
       goto __pyx_L5_argtuple_error;
@@ -1527,9 +1557,9 @@ static PyObject *__pyx_pw_6cutils_3pop(PyObject *__pyx_self, PyObject *__pyx_arg
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("pop", 1, 6, 6, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 23, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("pop1D", 1, 6, 6, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 23, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("cutils.pop", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("cutils.pop1D", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
@@ -1538,7 +1568,7 @@ static PyObject *__pyx_pw_6cutils_3pop(PyObject *__pyx_self, PyObject *__pyx_arg
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_W), __pyx_ptype_5numpy_ndarray, 0, "W", 0))) __PYX_ERR(0, 25, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_a), __pyx_ptype_5numpy_ndarray, 0, "a", 0))) __PYX_ERR(0, 26, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_theta), __pyx_ptype_5numpy_ndarray, 0, "theta", 0))) __PYX_ERR(0, 27, __pyx_L1_error)
-  __pyx_r = __pyx_pf_6cutils_2pop(__pyx_self, __pyx_v_config, __pyx_v_flips, __pyx_v_W, __pyx_v_a, __pyx_v_theta, __pyx_v_ng);
+  __pyx_r = __pyx_pf_6cutils_2pop1D(__pyx_self, __pyx_v_config, __pyx_v_flips, __pyx_v_W, __pyx_v_a, __pyx_v_theta, __pyx_v_ng);
 
   /* function exit code */
   goto __pyx_L0;
@@ -1549,7 +1579,7 @@ static PyObject *__pyx_pw_6cutils_3pop(PyObject *__pyx_self, PyObject *__pyx_arg
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_config, PyArrayObject *__pyx_v_flips, PyArrayObject *__pyx_v_W, PyArrayObject *__pyx_v_a, PyArrayObject *__pyx_v_theta, int __pyx_v_ng) {
+static PyObject *__pyx_pf_6cutils_2pop1D(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_config, PyArrayObject *__pyx_v_flips, PyArrayObject *__pyx_v_W, PyArrayObject *__pyx_v_a, PyArrayObject *__pyx_v_theta, int __pyx_v_ng) {
   int __pyx_v_nv;
   int __pyx_v_nf;
   int __pyx_v_ig;
@@ -1558,6 +1588,7 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
   int __pyx_v_i;
   PyArrayObject *__pyx_v__theta = 0;
   __pyx_t_double_complex __pyx_v_pratio;
+  __pyx_t_double_complex __pyx_v_sa;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_W;
   __Pyx_Buffer __pyx_pybuffer_W;
   __Pyx_LocalBuf_ND __pyx_pybuffernd__theta;
@@ -1576,22 +1607,25 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
   PyObject *__pyx_t_2 = NULL;
   PyObject *__pyx_t_3 = NULL;
   PyArrayObject *__pyx_t_4 = NULL;
-  Py_ssize_t __pyx_t_5;
-  PyObject *(*__pyx_t_6)(PyObject *);
-  int __pyx_t_7;
-  Py_ssize_t __pyx_t_8;
-  int __pyx_t_9;
-  PyObject *__pyx_t_10 = NULL;
-  int __pyx_t_11;
+  __pyx_t_double_complex __pyx_t_5;
+  Py_ssize_t __pyx_t_6;
+  PyObject *(*__pyx_t_7)(PyObject *);
+  int __pyx_t_8;
+  Py_ssize_t __pyx_t_9;
+  int __pyx_t_10;
+  PyObject *__pyx_t_11 = NULL;
   int __pyx_t_12;
-  PyObject *__pyx_t_13 = NULL;
+  int __pyx_t_13;
   PyObject *__pyx_t_14 = NULL;
-  Py_ssize_t __pyx_t_15;
-  Py_ssize_t __pyx_t_16;
-  npy_intp __pyx_t_17;
+  PyObject *__pyx_t_15 = NULL;
+  int __pyx_t_16;
+  Py_ssize_t __pyx_t_17;
   Py_ssize_t __pyx_t_18;
   Py_ssize_t __pyx_t_19;
-  __Pyx_RefNannySetupContext("pop", 0);
+  npy_intp __pyx_t_20;
+  Py_ssize_t __pyx_t_21;
+  Py_ssize_t __pyx_t_22;
+  __Pyx_RefNannySetupContext("pop1D", 0);
   __pyx_pybuffer__theta.pybuffer.buf = NULL;
   __pyx_pybuffer__theta.refcount = 0;
   __pyx_pybuffernd__theta.data = NULL;
@@ -1710,130 +1744,224 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
  */
   __pyx_v_pratio = __pyx_t_double_complex_from_parts(0, 0);
 
-  /* "cutils.pyx":37
+  /* "cutils.pyx":36
+ *     cdef complex_t th
  *     cdef complex_t _th
+ *     cdef complex_t sa=a.sum()             # <<<<<<<<<<<<<<
+ * 
+ *     for iflip in flips:
+ */
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_a), __pyx_n_s_sum); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 36, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = NULL;
+  if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+    }
+  }
+  if (__pyx_t_3) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 36, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  } else {
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 36, __pyx_L1_error)
+  }
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_5 = __Pyx_PyComplex_As___pyx_t_double_complex(__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 36, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v_sa = __pyx_t_5;
+
+  /* "cutils.pyx":38
+ *     cdef complex_t sa=a.sum()
  * 
  *     for iflip in flips:             # <<<<<<<<<<<<<<
  *         ci=config[iflip]
  *         for ig in range(ng):
  */
   if (likely(PyList_CheckExact(((PyObject *)__pyx_v_flips))) || PyTuple_CheckExact(((PyObject *)__pyx_v_flips))) {
-    __pyx_t_1 = ((PyObject *)__pyx_v_flips); __Pyx_INCREF(__pyx_t_1); __pyx_t_5 = 0;
-    __pyx_t_6 = NULL;
+    __pyx_t_1 = ((PyObject *)__pyx_v_flips); __Pyx_INCREF(__pyx_t_1); __pyx_t_6 = 0;
+    __pyx_t_7 = NULL;
   } else {
-    __pyx_t_5 = -1; __pyx_t_1 = PyObject_GetIter(((PyObject *)__pyx_v_flips)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 37, __pyx_L1_error)
+    __pyx_t_6 = -1; __pyx_t_1 = PyObject_GetIter(((PyObject *)__pyx_v_flips)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_6 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 37, __pyx_L1_error)
+    __pyx_t_7 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 38, __pyx_L1_error)
   }
   for (;;) {
-    if (likely(!__pyx_t_6)) {
+    if (likely(!__pyx_t_7)) {
       if (likely(PyList_CheckExact(__pyx_t_1))) {
-        if (__pyx_t_5 >= PyList_GET_SIZE(__pyx_t_1)) break;
+        if (__pyx_t_6 >= PyList_GET_SIZE(__pyx_t_1)) break;
         #if CYTHON_COMPILING_IN_CPYTHON
-        __pyx_t_2 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_5); __Pyx_INCREF(__pyx_t_2); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 37, __pyx_L1_error)
+        __pyx_t_2 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_6); __Pyx_INCREF(__pyx_t_2); __pyx_t_6++; if (unlikely(0 < 0)) __PYX_ERR(0, 38, __pyx_L1_error)
         #else
-        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
+        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_6); __pyx_t_6++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         #endif
       } else {
-        if (__pyx_t_5 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
+        if (__pyx_t_6 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
         #if CYTHON_COMPILING_IN_CPYTHON
-        __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_5); __Pyx_INCREF(__pyx_t_2); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 37, __pyx_L1_error)
+        __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_6); __Pyx_INCREF(__pyx_t_2); __pyx_t_6++; if (unlikely(0 < 0)) __PYX_ERR(0, 38, __pyx_L1_error)
         #else
-        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
+        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_6); __pyx_t_6++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         #endif
       }
     } else {
-      __pyx_t_2 = __pyx_t_6(__pyx_t_1);
+      __pyx_t_2 = __pyx_t_7(__pyx_t_1);
       if (unlikely(!__pyx_t_2)) {
         PyObject* exc_type = PyErr_Occurred();
         if (exc_type) {
           if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(0, 37, __pyx_L1_error)
+          else __PYX_ERR(0, 38, __pyx_L1_error)
         }
         break;
       }
       __Pyx_GOTREF(__pyx_t_2);
     }
-    __pyx_t_7 = __Pyx_PyInt_As_int(__pyx_t_2); if (unlikely((__pyx_t_7 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 37, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyInt_As_int(__pyx_t_2); if (unlikely((__pyx_t_8 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 38, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_v_iflip = __pyx_t_7;
+    __pyx_v_iflip = __pyx_t_8;
 
-    /* "cutils.pyx":38
+    /* "cutils.pyx":39
  * 
  *     for iflip in flips:
  *         ci=config[iflip]             # <<<<<<<<<<<<<<
  *         for ig in range(ng):
  *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
  */
-    __pyx_t_8 = __pyx_v_iflip;
-    __pyx_v_ci = (*__Pyx_BufPtrCContig1d(__pyx_t_6cutils_int_t *, __pyx_pybuffernd_config.rcbuffer->pybuffer.buf, __pyx_t_8, __pyx_pybuffernd_config.diminfo[0].strides));
+    __pyx_t_9 = __pyx_v_iflip;
+    __pyx_v_ci = (*__Pyx_BufPtrCContig1d(__pyx_t_6cutils_int_t *, __pyx_pybuffernd_config.rcbuffer->pybuffer.buf, __pyx_t_9, __pyx_pybuffernd_config.diminfo[0].strides));
 
-    /* "cutils.pyx":39
+    /* "cutils.pyx":40
  *     for iflip in flips:
  *         ci=config[iflip]
  *         for ig in range(ng):             # <<<<<<<<<<<<<<
  *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
- *         pratio-=2*config[iflip]*a[iflip]
+ *         if ng==config.shape[0]:
  */
-    __pyx_t_7 = __pyx_v_ng;
-    for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_7; __pyx_t_9+=1) {
-      __pyx_v_ig = __pyx_t_9;
+    __pyx_t_8 = __pyx_v_ng;
+    for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_8; __pyx_t_10+=1) {
+      __pyx_v_ig = __pyx_t_10;
 
-      /* "cutils.pyx":40
+      /* "cutils.pyx":41
  *         ci=config[iflip]
  *         for ig in range(ng):
  *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]             # <<<<<<<<<<<<<<
- *         pratio-=2*config[iflip]*a[iflip]
- *     for i in range(theta.shape[0]):
+ *         if ng==config.shape[0]:
+ *             pratio-=2*config[iflip]*sa
  */
-      __pyx_t_2 = __Pyx_PyInt_From_int((__pyx_v_ig * __pyx_v_nf)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 40, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyInt_From_int((__pyx_v_ig * __pyx_v_nf)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 41, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_3 = __Pyx_PyInt_From_long(((__pyx_v_ig + 1) * __pyx_v_nf)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 40, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyInt_From_long(((__pyx_v_ig + 1) * __pyx_v_nf)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 41, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_10 = PySlice_New(__pyx_t_2, __pyx_t_3, Py_None); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 40, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_10);
+      __pyx_t_11 = PySlice_New(__pyx_t_2, __pyx_t_3, Py_None); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 41, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_11);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = PyObject_GetItem(((PyObject *)__pyx_v__theta), __pyx_t_10); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 40, __pyx_L1_error)
+      __pyx_t_3 = PyObject_GetItem(((PyObject *)__pyx_v__theta), __pyx_t_11); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 41, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_2 = __Pyx_PyInt_From_long((2 * __pyx_v_ci)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 40, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyInt_From_long((2 * __pyx_v_ci)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 41, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_11 = (__pyx_v_iflip + __pyx_v_ig);
+      __pyx_t_12 = (__pyx_v_iflip + __pyx_v_ig);
       if (unlikely(__pyx_v_nv == 0)) {
         PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-        __PYX_ERR(0, 40, __pyx_L1_error)
+        __PYX_ERR(0, 41, __pyx_L1_error)
       }
-      __pyx_t_12 = __Pyx_mod_int(__pyx_t_11, __pyx_v_nv);
-      __pyx_t_13 = __Pyx_GetItemInt(((PyObject *)__pyx_v_W), __pyx_t_12, int, 1, __Pyx_PyInt_From_int, 0, 0, 0); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 40, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_13);
-      __pyx_t_14 = PyNumber_Multiply(__pyx_t_2, __pyx_t_13); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 40, __pyx_L1_error)
+      __pyx_t_13 = __Pyx_mod_int(__pyx_t_12, __pyx_v_nv);
+      __pyx_t_14 = __Pyx_GetItemInt(((PyObject *)__pyx_v_W), __pyx_t_13, int, 1, __Pyx_PyInt_From_int, 0, 0, 0); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 41, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_14);
+      __pyx_t_15 = PyNumber_Multiply(__pyx_t_2, __pyx_t_14); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 41, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_15);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
-      __pyx_t_13 = PyNumber_InPlaceSubtract(__pyx_t_3, __pyx_t_14); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 40, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_13);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-      if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v__theta), __pyx_t_10, __pyx_t_13) < 0)) __PYX_ERR(0, 40, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
-      __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+      __pyx_t_14 = PyNumber_InPlaceSubtract(__pyx_t_3, __pyx_t_15); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 41, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_14);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
+      if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v__theta), __pyx_t_11, __pyx_t_14) < 0)) __PYX_ERR(0, 41, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+      __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
     }
 
-    /* "cutils.pyx":41
+    /* "cutils.pyx":42
  *         for ig in range(ng):
  *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
- *         pratio-=2*config[iflip]*a[iflip]             # <<<<<<<<<<<<<<
+ *         if ng==config.shape[0]:             # <<<<<<<<<<<<<<
+ *             pratio-=2*config[iflip]*sa
+ *         elif ng==1:
+ */
+    __pyx_t_16 = ((__pyx_v_ng == (__pyx_v_config->dimensions[0])) != 0);
+    if (__pyx_t_16) {
+
+      /* "cutils.pyx":43
+ *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
+ *         if ng==config.shape[0]:
+ *             pratio-=2*config[iflip]*sa             # <<<<<<<<<<<<<<
+ *         elif ng==1:
+ *             pratio-=2*config[iflip]*a[iflip]
+ */
+      __pyx_t_17 = __pyx_v_iflip;
+      __pyx_v_pratio = __Pyx_c_diff(__pyx_v_pratio, __Pyx_c_prod(__pyx_t_double_complex_from_parts((2 * (*__Pyx_BufPtrCContig1d(__pyx_t_6cutils_int_t *, __pyx_pybuffernd_config.rcbuffer->pybuffer.buf, __pyx_t_17, __pyx_pybuffernd_config.diminfo[0].strides))), 0), __pyx_v_sa));
+
+      /* "cutils.pyx":42
+ *         for ig in range(ng):
+ *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
+ *         if ng==config.shape[0]:             # <<<<<<<<<<<<<<
+ *             pratio-=2*config[iflip]*sa
+ *         elif ng==1:
+ */
+      goto __pyx_L7;
+    }
+
+    /* "cutils.pyx":44
+ *         if ng==config.shape[0]:
+ *             pratio-=2*config[iflip]*sa
+ *         elif ng==1:             # <<<<<<<<<<<<<<
+ *             pratio-=2*config[iflip]*a[iflip]
+ *         else:
+ */
+    __pyx_t_16 = ((__pyx_v_ng == 1) != 0);
+    if (__pyx_t_16) {
+
+      /* "cutils.pyx":45
+ *             pratio-=2*config[iflip]*sa
+ *         elif ng==1:
+ *             pratio-=2*config[iflip]*a[iflip]             # <<<<<<<<<<<<<<
+ *         else:
+ *             raise ValueError
+ */
+      __pyx_t_18 = __pyx_v_iflip;
+      __pyx_t_19 = __pyx_v_iflip;
+      __pyx_v_pratio = __Pyx_c_diff(__pyx_v_pratio, __Pyx_c_prod(__pyx_t_double_complex_from_parts((2 * (*__Pyx_BufPtrCContig1d(__pyx_t_6cutils_int_t *, __pyx_pybuffernd_config.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_config.diminfo[0].strides))), 0), (*__Pyx_BufPtrCContig1d(__pyx_t_double_complex *, __pyx_pybuffernd_a.rcbuffer->pybuffer.buf, __pyx_t_19, __pyx_pybuffernd_a.diminfo[0].strides))));
+
+      /* "cutils.pyx":44
+ *         if ng==config.shape[0]:
+ *             pratio-=2*config[iflip]*sa
+ *         elif ng==1:             # <<<<<<<<<<<<<<
+ *             pratio-=2*config[iflip]*a[iflip]
+ *         else:
+ */
+      goto __pyx_L7;
+    }
+
+    /* "cutils.pyx":47
+ *             pratio-=2*config[iflip]*a[iflip]
+ *         else:
+ *             raise ValueError             # <<<<<<<<<<<<<<
  *     for i in range(theta.shape[0]):
  *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
  */
-    __pyx_t_15 = __pyx_v_iflip;
-    __pyx_t_16 = __pyx_v_iflip;
-    __pyx_v_pratio = __Pyx_c_diff(__pyx_v_pratio, __Pyx_c_prod(__pyx_t_double_complex_from_parts((2 * (*__Pyx_BufPtrCContig1d(__pyx_t_6cutils_int_t *, __pyx_pybuffernd_config.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_config.diminfo[0].strides))), 0), (*__Pyx_BufPtrCContig1d(__pyx_t_double_complex *, __pyx_pybuffernd_a.rcbuffer->pybuffer.buf, __pyx_t_16, __pyx_pybuffernd_a.diminfo[0].strides))));
+    /*else*/ {
+      __Pyx_Raise(__pyx_builtin_ValueError, 0, 0, 0);
+      __PYX_ERR(0, 47, __pyx_L1_error)
+    }
+    __pyx_L7:;
 
-    /* "cutils.pyx":37
- *     cdef complex_t _th
+    /* "cutils.pyx":38
+ *     cdef complex_t sa=a.sum()
  * 
  *     for iflip in flips:             # <<<<<<<<<<<<<<
  *         ci=config[iflip]
@@ -1842,61 +1970,64 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "cutils.pyx":42
- *             _theta[ig*nf:(ig+1)*nf]-=2*ci*W[(iflip+ig)%nv]
- *         pratio-=2*config[iflip]*a[iflip]
+  /* "cutils.pyx":48
+ *         else:
+ *             raise ValueError
  *     for i in range(theta.shape[0]):             # <<<<<<<<<<<<<<
  *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
  *     pratio=exp(pratio)
  */
-  __pyx_t_17 = (__pyx_v_theta->dimensions[0]);
-  for (__pyx_t_7 = 0; __pyx_t_7 < __pyx_t_17; __pyx_t_7+=1) {
-    __pyx_v_i = __pyx_t_7;
+  __pyx_t_20 = (__pyx_v_theta->dimensions[0]);
+  for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_20; __pyx_t_8+=1) {
+    __pyx_v_i = __pyx_t_8;
 
-    /* "cutils.pyx":43
- *         pratio-=2*config[iflip]*a[iflip]
+    /* "cutils.pyx":49
+ *             raise ValueError
  *     for i in range(theta.shape[0]):
  *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])             # <<<<<<<<<<<<<<
  *     pratio=exp(pratio)
  *     return _theta,pratio
  */
-    __pyx_t_18 = __pyx_v_i;
-    __pyx_t_19 = __pyx_v_i;
-    __pyx_v_pratio = __Pyx_c_sum(__pyx_v_pratio, __Pyx_c_diff(lncoshc((*__Pyx_BufPtrCContig1d(__pyx_t_double_complex *, __pyx_pybuffernd__theta.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd__theta.diminfo[0].strides))), lncoshc((*__Pyx_BufPtrCContig1d(__pyx_t_double_complex *, __pyx_pybuffernd_theta.rcbuffer->pybuffer.buf, __pyx_t_19, __pyx_pybuffernd_theta.diminfo[0].strides)))));
+    __pyx_t_21 = __pyx_v_i;
+    __pyx_t_22 = __pyx_v_i;
+    __pyx_v_pratio = __Pyx_c_sum(__pyx_v_pratio, __Pyx_c_diff(lncoshc((*__Pyx_BufPtrCContig1d(__pyx_t_double_complex *, __pyx_pybuffernd__theta.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd__theta.diminfo[0].strides))), lncoshc((*__Pyx_BufPtrCContig1d(__pyx_t_double_complex *, __pyx_pybuffernd_theta.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_theta.diminfo[0].strides)))));
   }
 
-  /* "cutils.pyx":44
+  /* "cutils.pyx":50
  *     for i in range(theta.shape[0]):
  *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
  *     pratio=exp(pratio)             # <<<<<<<<<<<<<<
  *     return _theta,pratio
+ * 
  */
   __pyx_v_pratio = exp(__pyx_v_pratio);
 
-  /* "cutils.pyx":45
+  /* "cutils.pyx":51
  *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
  *     pratio=exp(pratio)
  *     return _theta,pratio             # <<<<<<<<<<<<<<
+ * 
+ * @cython.boundscheck(False) # turn off bounds-checking for entire function
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_PyComplex_FromComplex(__pyx_v_pratio); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 45, __pyx_L1_error)
+  __pyx_t_1 = __pyx_PyComplex_FromComplex(__pyx_v_pratio); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 51, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_10 = PyTuple_New(2); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 45, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_10);
+  __pyx_t_11 = PyTuple_New(2); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_11);
   __Pyx_INCREF(((PyObject *)__pyx_v__theta));
   __Pyx_GIVEREF(((PyObject *)__pyx_v__theta));
-  PyTuple_SET_ITEM(__pyx_t_10, 0, ((PyObject *)__pyx_v__theta));
+  PyTuple_SET_ITEM(__pyx_t_11, 0, ((PyObject *)__pyx_v__theta));
   __Pyx_GIVEREF(__pyx_t_1);
-  PyTuple_SET_ITEM(__pyx_t_10, 1, __pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_11, 1, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_r = __pyx_t_10;
-  __pyx_t_10 = 0;
+  __pyx_r = __pyx_t_11;
+  __pyx_t_11 = 0;
   goto __pyx_L0;
 
   /* "cutils.pyx":23
  * @cython.boundscheck(False) # turn off bounds-checking for entire function
  * @cython.wraparound(False)  # turn off negative index wrapping for entire function
- * def pop(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
+ * def pop1D(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
  *         np.ndarray[int_t,ndim=1,mode='c'] flips,
  *         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
  */
@@ -1906,9 +2037,9 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_10);
-  __Pyx_XDECREF(__pyx_t_13);
+  __Pyx_XDECREF(__pyx_t_11);
   __Pyx_XDECREF(__pyx_t_14);
+  __Pyx_XDECREF(__pyx_t_15);
   { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
     __Pyx_PyThreadState_declare
     __Pyx_PyThreadState_assign
@@ -1920,7 +2051,7 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_flips.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_theta.rcbuffer->pybuffer);
   __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
-  __Pyx_AddTraceback("cutils.pop", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("cutils.pop1D", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   goto __pyx_L2;
   __pyx_L0:;
@@ -1932,6 +2063,722 @@ static PyObject *__pyx_pf_6cutils_2pop(CYTHON_UNUSED PyObject *__pyx_self, PyArr
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_theta.rcbuffer->pybuffer);
   __pyx_L2:;
   __Pyx_XDECREF((PyObject *)__pyx_v__theta);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "cutils.pyx":55
+ * @cython.boundscheck(False) # turn off bounds-checking for entire function
+ * @cython.wraparound(False)  # turn off negative index wrapping for entire function
+ * def pop2D(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
+ *         np.ndarray[int_t,ndim=1,mode='c'] flips,
+ *         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_6cutils_5pop2D(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_6cutils_5pop2D = {"pop2D", (PyCFunction)__pyx_pw_6cutils_5pop2D, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_6cutils_5pop2D(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyArrayObject *__pyx_v_config = 0;
+  PyArrayObject *__pyx_v_flips = 0;
+  PyArrayObject *__pyx_v_W = 0;
+  PyArrayObject *__pyx_v_a = 0;
+  PyArrayObject *__pyx_v_theta = 0;
+  PyArrayObject *__pyx_v_ngs = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("pop2D (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_config,&__pyx_n_s_flips,&__pyx_n_s_W,&__pyx_n_s_a,&__pyx_n_s_theta,&__pyx_n_s_ngs,0};
+    PyObject* values[6] = {0,0,0,0,0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  6: values[5] = PyTuple_GET_ITEM(__pyx_args, 5);
+        case  5: values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
+        case  4: values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
+        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_config)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        case  1:
+        if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_flips)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("pop2D", 1, 6, 6, 1); __PYX_ERR(0, 55, __pyx_L3_error)
+        }
+        case  2:
+        if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_W)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("pop2D", 1, 6, 6, 2); __PYX_ERR(0, 55, __pyx_L3_error)
+        }
+        case  3:
+        if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_a)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("pop2D", 1, 6, 6, 3); __PYX_ERR(0, 55, __pyx_L3_error)
+        }
+        case  4:
+        if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_theta)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("pop2D", 1, 6, 6, 4); __PYX_ERR(0, 55, __pyx_L3_error)
+        }
+        case  5:
+        if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_ngs)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("pop2D", 1, 6, 6, 5); __PYX_ERR(0, 55, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "pop2D") < 0)) __PYX_ERR(0, 55, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 6) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+      values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
+      values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
+      values[5] = PyTuple_GET_ITEM(__pyx_args, 5);
+    }
+    __pyx_v_config = ((PyArrayObject *)values[0]);
+    __pyx_v_flips = ((PyArrayObject *)values[1]);
+    __pyx_v_W = ((PyArrayObject *)values[2]);
+    __pyx_v_a = ((PyArrayObject *)values[3]);
+    __pyx_v_theta = ((PyArrayObject *)values[4]);
+    __pyx_v_ngs = ((PyArrayObject *)values[5]);
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("pop2D", 1, 6, 6, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 55, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("cutils.pop2D", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_config), __pyx_ptype_5numpy_ndarray, 0, "config", 0))) __PYX_ERR(0, 55, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_flips), __pyx_ptype_5numpy_ndarray, 1, "flips", 0))) __PYX_ERR(0, 56, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_W), __pyx_ptype_5numpy_ndarray, 0, "W", 0))) __PYX_ERR(0, 57, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_a), __pyx_ptype_5numpy_ndarray, 0, "a", 0))) __PYX_ERR(0, 58, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_theta), __pyx_ptype_5numpy_ndarray, 0, "theta", 0))) __PYX_ERR(0, 59, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_ngs), __pyx_ptype_5numpy_ndarray, 0, "ngs", 0))) __PYX_ERR(0, 60, __pyx_L1_error)
+  __pyx_r = __pyx_pf_6cutils_4pop2D(__pyx_self, __pyx_v_config, __pyx_v_flips, __pyx_v_W, __pyx_v_a, __pyx_v_theta, __pyx_v_ngs);
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_6cutils_4pop2D(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_config, PyArrayObject *__pyx_v_flips, PyArrayObject *__pyx_v_W, PyArrayObject *__pyx_v_a, PyArrayObject *__pyx_v_theta, PyArrayObject *__pyx_v_ngs) {
+  CYTHON_UNUSED int __pyx_v_nv;
+  int __pyx_v_nf;
+  int __pyx_v_ig;
+  int __pyx_v_iflip;
+  int __pyx_v_ci;
+  int __pyx_v_i;
+  int __pyx_v_ig1;
+  int __pyx_v_ig2;
+  int __pyx_v_ng1;
+  int __pyx_v_ng2;
+  int __pyx_v_ng;
+  PyArrayObject *__pyx_v__theta = 0;
+  __pyx_t_double_complex __pyx_v_pratio;
+  __pyx_t_double_complex __pyx_v_sa;
+  PyObject *__pyx_v_iflip1 = NULL;
+  PyObject *__pyx_v_iflip2 = NULL;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_W;
+  __Pyx_Buffer __pyx_pybuffer_W;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd__theta;
+  __Pyx_Buffer __pyx_pybuffer__theta;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_a;
+  __Pyx_Buffer __pyx_pybuffer_a;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_config;
+  __Pyx_Buffer __pyx_pybuffer_config;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_flips;
+  __Pyx_Buffer __pyx_pybuffer_flips;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_ngs;
+  __Pyx_Buffer __pyx_pybuffer_ngs;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_theta;
+  __Pyx_Buffer __pyx_pybuffer_theta;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  Py_ssize_t __pyx_t_1;
+  Py_ssize_t __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  PyArrayObject *__pyx_t_6 = NULL;
+  __pyx_t_double_complex __pyx_t_7;
+  Py_ssize_t __pyx_t_8;
+  PyObject *(*__pyx_t_9)(PyObject *);
+  int __pyx_t_10;
+  Py_ssize_t __pyx_t_11;
+  int __pyx_t_12;
+  int __pyx_t_13;
+  int __pyx_t_14;
+  PyObject *__pyx_t_15 = NULL;
+  PyObject *__pyx_t_16 = NULL;
+  PyObject *__pyx_t_17 = NULL;
+  PyObject *__pyx_t_18 = NULL;
+  PyObject *__pyx_t_19 = NULL;
+  int __pyx_t_20;
+  Py_ssize_t __pyx_t_21;
+  Py_ssize_t __pyx_t_22;
+  Py_ssize_t __pyx_t_23;
+  npy_intp __pyx_t_24;
+  Py_ssize_t __pyx_t_25;
+  Py_ssize_t __pyx_t_26;
+  __Pyx_RefNannySetupContext("pop2D", 0);
+  __pyx_pybuffer__theta.pybuffer.buf = NULL;
+  __pyx_pybuffer__theta.refcount = 0;
+  __pyx_pybuffernd__theta.data = NULL;
+  __pyx_pybuffernd__theta.rcbuffer = &__pyx_pybuffer__theta;
+  __pyx_pybuffer_config.pybuffer.buf = NULL;
+  __pyx_pybuffer_config.refcount = 0;
+  __pyx_pybuffernd_config.data = NULL;
+  __pyx_pybuffernd_config.rcbuffer = &__pyx_pybuffer_config;
+  __pyx_pybuffer_flips.pybuffer.buf = NULL;
+  __pyx_pybuffer_flips.refcount = 0;
+  __pyx_pybuffernd_flips.data = NULL;
+  __pyx_pybuffernd_flips.rcbuffer = &__pyx_pybuffer_flips;
+  __pyx_pybuffer_W.pybuffer.buf = NULL;
+  __pyx_pybuffer_W.refcount = 0;
+  __pyx_pybuffernd_W.data = NULL;
+  __pyx_pybuffernd_W.rcbuffer = &__pyx_pybuffer_W;
+  __pyx_pybuffer_a.pybuffer.buf = NULL;
+  __pyx_pybuffer_a.refcount = 0;
+  __pyx_pybuffernd_a.data = NULL;
+  __pyx_pybuffernd_a.rcbuffer = &__pyx_pybuffer_a;
+  __pyx_pybuffer_theta.pybuffer.buf = NULL;
+  __pyx_pybuffer_theta.refcount = 0;
+  __pyx_pybuffernd_theta.data = NULL;
+  __pyx_pybuffernd_theta.rcbuffer = &__pyx_pybuffer_theta;
+  __pyx_pybuffer_ngs.pybuffer.buf = NULL;
+  __pyx_pybuffer_ngs.refcount = 0;
+  __pyx_pybuffernd_ngs.data = NULL;
+  __pyx_pybuffernd_ngs.rcbuffer = &__pyx_pybuffer_ngs;
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_config.rcbuffer->pybuffer, (PyObject*)__pyx_v_config, &__Pyx_TypeInfo_nn___pyx_t_6cutils_int_t, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 55, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_config.diminfo[0].strides = __pyx_pybuffernd_config.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_config.diminfo[0].shape = __pyx_pybuffernd_config.rcbuffer->pybuffer.shape[0];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_flips.rcbuffer->pybuffer, (PyObject*)__pyx_v_flips, &__Pyx_TypeInfo_nn___pyx_t_6cutils_int_t, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 55, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_flips.diminfo[0].strides = __pyx_pybuffernd_flips.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_flips.diminfo[0].shape = __pyx_pybuffernd_flips.rcbuffer->pybuffer.shape[0];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_W.rcbuffer->pybuffer, (PyObject*)__pyx_v_W, &__Pyx_TypeInfo___pyx_t_double_complex, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 55, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_W.diminfo[0].strides = __pyx_pybuffernd_W.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_W.diminfo[0].shape = __pyx_pybuffernd_W.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_W.diminfo[1].strides = __pyx_pybuffernd_W.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_W.diminfo[1].shape = __pyx_pybuffernd_W.rcbuffer->pybuffer.shape[1];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_a.rcbuffer->pybuffer, (PyObject*)__pyx_v_a, &__Pyx_TypeInfo___pyx_t_double_complex, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 55, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_a.diminfo[0].strides = __pyx_pybuffernd_a.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_a.diminfo[0].shape = __pyx_pybuffernd_a.rcbuffer->pybuffer.shape[0];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_theta.rcbuffer->pybuffer, (PyObject*)__pyx_v_theta, &__Pyx_TypeInfo___pyx_t_double_complex, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 55, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_theta.diminfo[0].strides = __pyx_pybuffernd_theta.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_theta.diminfo[0].shape = __pyx_pybuffernd_theta.rcbuffer->pybuffer.shape[0];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_ngs.rcbuffer->pybuffer, (PyObject*)__pyx_v_ngs, &__Pyx_TypeInfo_nn___pyx_t_6cutils_int_t, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 55, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_ngs.diminfo[0].strides = __pyx_pybuffernd_ngs.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_ngs.diminfo[0].shape = __pyx_pybuffernd_ngs.rcbuffer->pybuffer.shape[0];
+
+  /* "cutils.pyx":61
+ *         np.ndarray[complex_t,ndim=1,mode='c'] theta not None,
+ *         np.ndarray[int_t,ndim=1,mode='c'] ngs not None):
+ *     cdef int nv=W.shape[0]             # <<<<<<<<<<<<<<
+ *     cdef int nf=W.shape[1]  #number of features.
+ * 
+ */
+  __pyx_v_nv = (__pyx_v_W->dimensions[0]);
+
+  /* "cutils.pyx":62
+ *         np.ndarray[int_t,ndim=1,mode='c'] ngs not None):
+ *     cdef int nv=W.shape[0]
+ *     cdef int nf=W.shape[1]  #number of features.             # <<<<<<<<<<<<<<
+ * 
+ *     cdef int ig,iflip,ci,i,ig1,ig2,ng1=ngs[0],ng2=ngs[1],ng=ng1*ng2
+ */
+  __pyx_v_nf = (__pyx_v_W->dimensions[1]);
+
+  /* "cutils.pyx":64
+ *     cdef int nf=W.shape[1]  #number of features.
+ * 
+ *     cdef int ig,iflip,ci,i,ig1,ig2,ng1=ngs[0],ng2=ngs[1],ng=ng1*ng2             # <<<<<<<<<<<<<<
+ *     cdef np.ndarray[complex_t,ndim=1,mode='c'] _theta=theta.copy()
+ *     cdef complex_t pratio=0
+ */
+  __pyx_t_1 = 0;
+  __pyx_v_ng1 = (*__Pyx_BufPtrCContig1d(__pyx_t_6cutils_int_t *, __pyx_pybuffernd_ngs.rcbuffer->pybuffer.buf, __pyx_t_1, __pyx_pybuffernd_ngs.diminfo[0].strides));
+  __pyx_t_2 = 1;
+  __pyx_v_ng2 = (*__Pyx_BufPtrCContig1d(__pyx_t_6cutils_int_t *, __pyx_pybuffernd_ngs.rcbuffer->pybuffer.buf, __pyx_t_2, __pyx_pybuffernd_ngs.diminfo[0].strides));
+  __pyx_v_ng = (__pyx_v_ng1 * __pyx_v_ng2);
+
+  /* "cutils.pyx":65
+ * 
+ *     cdef int ig,iflip,ci,i,ig1,ig2,ng1=ngs[0],ng2=ngs[1],ng=ng1*ng2
+ *     cdef np.ndarray[complex_t,ndim=1,mode='c'] _theta=theta.copy()             # <<<<<<<<<<<<<<
+ *     cdef complex_t pratio=0
+ *     cdef complex_t th
+ */
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_theta), __pyx_n_s_copy); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 65, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = NULL;
+  if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_4))) {
+    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
+    if (likely(__pyx_t_5)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_4, function);
+    }
+  }
+  if (__pyx_t_5) {
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 65, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  } else {
+    __pyx_t_3 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 65, __pyx_L1_error)
+  }
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 65, __pyx_L1_error)
+  __pyx_t_6 = ((PyArrayObject *)__pyx_t_3);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd__theta.rcbuffer->pybuffer, (PyObject*)__pyx_t_6, &__Pyx_TypeInfo___pyx_t_double_complex, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {
+      __pyx_v__theta = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd__theta.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 65, __pyx_L1_error)
+    } else {__pyx_pybuffernd__theta.diminfo[0].strides = __pyx_pybuffernd__theta.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd__theta.diminfo[0].shape = __pyx_pybuffernd__theta.rcbuffer->pybuffer.shape[0];
+    }
+  }
+  __pyx_t_6 = 0;
+  __pyx_v__theta = ((PyArrayObject *)__pyx_t_3);
+  __pyx_t_3 = 0;
+
+  /* "cutils.pyx":66
+ *     cdef int ig,iflip,ci,i,ig1,ig2,ng1=ngs[0],ng2=ngs[1],ng=ng1*ng2
+ *     cdef np.ndarray[complex_t,ndim=1,mode='c'] _theta=theta.copy()
+ *     cdef complex_t pratio=0             # <<<<<<<<<<<<<<
+ *     cdef complex_t th
+ *     cdef complex_t _th
+ */
+  __pyx_v_pratio = __pyx_t_double_complex_from_parts(0, 0);
+
+  /* "cutils.pyx":69
+ *     cdef complex_t th
+ *     cdef complex_t _th
+ *     cdef complex_t sa=a.sum()             # <<<<<<<<<<<<<<
+ * 
+ *     for iflip in flips:
+ */
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_a), __pyx_n_s_sum); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 69, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = NULL;
+  if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_4))) {
+    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
+    if (likely(__pyx_t_5)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_4, function);
+    }
+  }
+  if (__pyx_t_5) {
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 69, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  } else {
+    __pyx_t_3 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 69, __pyx_L1_error)
+  }
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_7 = __Pyx_PyComplex_As___pyx_t_double_complex(__pyx_t_3); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 69, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_v_sa = __pyx_t_7;
+
+  /* "cutils.pyx":71
+ *     cdef complex_t sa=a.sum()
+ * 
+ *     for iflip in flips:             # <<<<<<<<<<<<<<
+ *         ci=config[iflip]
+ *         for ig1 in range(ng1):
+ */
+  if (likely(PyList_CheckExact(((PyObject *)__pyx_v_flips))) || PyTuple_CheckExact(((PyObject *)__pyx_v_flips))) {
+    __pyx_t_3 = ((PyObject *)__pyx_v_flips); __Pyx_INCREF(__pyx_t_3); __pyx_t_8 = 0;
+    __pyx_t_9 = NULL;
+  } else {
+    __pyx_t_8 = -1; __pyx_t_3 = PyObject_GetIter(((PyObject *)__pyx_v_flips)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 71, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_9 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 71, __pyx_L1_error)
+  }
+  for (;;) {
+    if (likely(!__pyx_t_9)) {
+      if (likely(PyList_CheckExact(__pyx_t_3))) {
+        if (__pyx_t_8 >= PyList_GET_SIZE(__pyx_t_3)) break;
+        #if CYTHON_COMPILING_IN_CPYTHON
+        __pyx_t_4 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_8); __Pyx_INCREF(__pyx_t_4); __pyx_t_8++; if (unlikely(0 < 0)) __PYX_ERR(0, 71, __pyx_L1_error)
+        #else
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_3, __pyx_t_8); __pyx_t_8++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 71, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        #endif
+      } else {
+        if (__pyx_t_8 >= PyTuple_GET_SIZE(__pyx_t_3)) break;
+        #if CYTHON_COMPILING_IN_CPYTHON
+        __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_8); __Pyx_INCREF(__pyx_t_4); __pyx_t_8++; if (unlikely(0 < 0)) __PYX_ERR(0, 71, __pyx_L1_error)
+        #else
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_3, __pyx_t_8); __pyx_t_8++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 71, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        #endif
+      }
+    } else {
+      __pyx_t_4 = __pyx_t_9(__pyx_t_3);
+      if (unlikely(!__pyx_t_4)) {
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type) {
+          if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
+          else __PYX_ERR(0, 71, __pyx_L1_error)
+        }
+        break;
+      }
+      __Pyx_GOTREF(__pyx_t_4);
+    }
+    __pyx_t_10 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_10 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 71, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __pyx_v_iflip = __pyx_t_10;
+
+    /* "cutils.pyx":72
+ * 
+ *     for iflip in flips:
+ *         ci=config[iflip]             # <<<<<<<<<<<<<<
+ *         for ig1 in range(ng1):
+ *             for ig2 in range(ng2):
+ */
+    __pyx_t_11 = __pyx_v_iflip;
+    __pyx_v_ci = (*__Pyx_BufPtrCContig1d(__pyx_t_6cutils_int_t *, __pyx_pybuffernd_config.rcbuffer->pybuffer.buf, __pyx_t_11, __pyx_pybuffernd_config.diminfo[0].strides));
+
+    /* "cutils.pyx":73
+ *     for iflip in flips:
+ *         ci=config[iflip]
+ *         for ig1 in range(ng1):             # <<<<<<<<<<<<<<
+ *             for ig2 in range(ng2):
+ *                 ig=ig1*ng2+ig2
+ */
+    __pyx_t_10 = __pyx_v_ng1;
+    for (__pyx_t_12 = 0; __pyx_t_12 < __pyx_t_10; __pyx_t_12+=1) {
+      __pyx_v_ig1 = __pyx_t_12;
+
+      /* "cutils.pyx":74
+ *         ci=config[iflip]
+ *         for ig1 in range(ng1):
+ *             for ig2 in range(ng2):             # <<<<<<<<<<<<<<
+ *                 ig=ig1*ng2+ig2
+ *                 iflip1,iflip2=iflip/ng2,iflip%ng2
+ */
+      __pyx_t_13 = __pyx_v_ng2;
+      for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
+        __pyx_v_ig2 = __pyx_t_14;
+
+        /* "cutils.pyx":75
+ *         for ig1 in range(ng1):
+ *             for ig2 in range(ng2):
+ *                 ig=ig1*ng2+ig2             # <<<<<<<<<<<<<<
+ *                 iflip1,iflip2=iflip/ng2,iflip%ng2
+ *                 _theta[ig*nf:(ig+1)*nf]-=2*ci*W[((iflip1+ig1)%ng1)*ng2+(iflip2+ig2)%ng2]
+ */
+        __pyx_v_ig = ((__pyx_v_ig1 * __pyx_v_ng2) + __pyx_v_ig2);
+
+        /* "cutils.pyx":76
+ *             for ig2 in range(ng2):
+ *                 ig=ig1*ng2+ig2
+ *                 iflip1,iflip2=iflip/ng2,iflip%ng2             # <<<<<<<<<<<<<<
+ *                 _theta[ig*nf:(ig+1)*nf]-=2*ci*W[((iflip1+ig1)%ng1)*ng2+(iflip2+ig2)%ng2]
+ *         if ng==config.shape[0]:
+ */
+        if (unlikely(__pyx_v_ng2 == 0)) {
+          PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+          __PYX_ERR(0, 76, __pyx_L1_error)
+        }
+        else if (sizeof(int) == sizeof(long) && (!(((int)-1) > 0)) && unlikely(__pyx_v_ng2 == (int)-1)  && unlikely(UNARY_NEG_WOULD_OVERFLOW(__pyx_v_iflip))) {
+          PyErr_SetString(PyExc_OverflowError, "value too large to perform division");
+          __PYX_ERR(0, 76, __pyx_L1_error)
+        }
+        __pyx_t_4 = __Pyx_PyInt_From_int(__Pyx_div_int(__pyx_v_iflip, __pyx_v_ng2)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 76, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        if (unlikely(__pyx_v_ng2 == 0)) {
+          PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+          __PYX_ERR(0, 76, __pyx_L1_error)
+        }
+        __pyx_t_5 = __Pyx_PyInt_From_int(__Pyx_mod_int(__pyx_v_iflip, __pyx_v_ng2)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 76, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_XDECREF_SET(__pyx_v_iflip1, __pyx_t_4);
+        __pyx_t_4 = 0;
+        __Pyx_XDECREF_SET(__pyx_v_iflip2, __pyx_t_5);
+        __pyx_t_5 = 0;
+
+        /* "cutils.pyx":77
+ *                 ig=ig1*ng2+ig2
+ *                 iflip1,iflip2=iflip/ng2,iflip%ng2
+ *                 _theta[ig*nf:(ig+1)*nf]-=2*ci*W[((iflip1+ig1)%ng1)*ng2+(iflip2+ig2)%ng2]             # <<<<<<<<<<<<<<
+ *         if ng==config.shape[0]:
+ *             pratio-=2*config[iflip]*sa
+ */
+        __pyx_t_5 = __Pyx_PyInt_From_int((__pyx_v_ig * __pyx_v_nf)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __pyx_t_4 = __Pyx_PyInt_From_long(((__pyx_v_ig + 1) * __pyx_v_nf)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __pyx_t_15 = PySlice_New(__pyx_t_5, __pyx_t_4, Py_None); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_15);
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        __pyx_t_4 = PyObject_GetItem(((PyObject *)__pyx_v__theta), __pyx_t_15); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __pyx_t_5 = __Pyx_PyInt_From_long((2 * __pyx_v_ci)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __pyx_t_16 = __Pyx_PyInt_From_int(__pyx_v_ig1); if (unlikely(!__pyx_t_16)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_16);
+        __pyx_t_17 = PyNumber_Add(__pyx_v_iflip1, __pyx_t_16); if (unlikely(!__pyx_t_17)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_17);
+        __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
+        __pyx_t_16 = __Pyx_PyInt_From_int(__pyx_v_ng1); if (unlikely(!__pyx_t_16)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_16);
+        __pyx_t_18 = PyNumber_Remainder(__pyx_t_17, __pyx_t_16); if (unlikely(!__pyx_t_18)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_18);
+        __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
+        __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
+        __pyx_t_16 = __Pyx_PyInt_From_int(__pyx_v_ng2); if (unlikely(!__pyx_t_16)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_16);
+        __pyx_t_17 = PyNumber_Multiply(__pyx_t_18, __pyx_t_16); if (unlikely(!__pyx_t_17)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_17);
+        __Pyx_DECREF(__pyx_t_18); __pyx_t_18 = 0;
+        __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
+        __pyx_t_16 = __Pyx_PyInt_From_int(__pyx_v_ig2); if (unlikely(!__pyx_t_16)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_16);
+        __pyx_t_18 = PyNumber_Add(__pyx_v_iflip2, __pyx_t_16); if (unlikely(!__pyx_t_18)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_18);
+        __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
+        __pyx_t_16 = __Pyx_PyInt_From_int(__pyx_v_ng2); if (unlikely(!__pyx_t_16)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_16);
+        __pyx_t_19 = PyNumber_Remainder(__pyx_t_18, __pyx_t_16); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_19);
+        __Pyx_DECREF(__pyx_t_18); __pyx_t_18 = 0;
+        __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
+        __pyx_t_16 = PyNumber_Add(__pyx_t_17, __pyx_t_19); if (unlikely(!__pyx_t_16)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_16);
+        __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
+        __Pyx_DECREF(__pyx_t_19); __pyx_t_19 = 0;
+        __pyx_t_19 = PyObject_GetItem(((PyObject *)__pyx_v_W), __pyx_t_16); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_19);
+        __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
+        __pyx_t_16 = PyNumber_Multiply(__pyx_t_5, __pyx_t_19); if (unlikely(!__pyx_t_16)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_16);
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_DECREF(__pyx_t_19); __pyx_t_19 = 0;
+        __pyx_t_19 = PyNumber_InPlaceSubtract(__pyx_t_4, __pyx_t_16); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_19);
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
+        if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v__theta), __pyx_t_15, __pyx_t_19) < 0)) __PYX_ERR(0, 77, __pyx_L1_error)
+        __Pyx_DECREF(__pyx_t_19); __pyx_t_19 = 0;
+        __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
+      }
+    }
+
+    /* "cutils.pyx":78
+ *                 iflip1,iflip2=iflip/ng2,iflip%ng2
+ *                 _theta[ig*nf:(ig+1)*nf]-=2*ci*W[((iflip1+ig1)%ng1)*ng2+(iflip2+ig2)%ng2]
+ *         if ng==config.shape[0]:             # <<<<<<<<<<<<<<
+ *             pratio-=2*config[iflip]*sa
+ *         elif ng==1:
+ */
+    __pyx_t_20 = ((__pyx_v_ng == (__pyx_v_config->dimensions[0])) != 0);
+    if (__pyx_t_20) {
+
+      /* "cutils.pyx":79
+ *                 _theta[ig*nf:(ig+1)*nf]-=2*ci*W[((iflip1+ig1)%ng1)*ng2+(iflip2+ig2)%ng2]
+ *         if ng==config.shape[0]:
+ *             pratio-=2*config[iflip]*sa             # <<<<<<<<<<<<<<
+ *         elif ng==1:
+ *             pratio-=2*config[iflip]*a[iflip]
+ */
+      __pyx_t_21 = __pyx_v_iflip;
+      __pyx_v_pratio = __Pyx_c_diff(__pyx_v_pratio, __Pyx_c_prod(__pyx_t_double_complex_from_parts((2 * (*__Pyx_BufPtrCContig1d(__pyx_t_6cutils_int_t *, __pyx_pybuffernd_config.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_config.diminfo[0].strides))), 0), __pyx_v_sa));
+
+      /* "cutils.pyx":78
+ *                 iflip1,iflip2=iflip/ng2,iflip%ng2
+ *                 _theta[ig*nf:(ig+1)*nf]-=2*ci*W[((iflip1+ig1)%ng1)*ng2+(iflip2+ig2)%ng2]
+ *         if ng==config.shape[0]:             # <<<<<<<<<<<<<<
+ *             pratio-=2*config[iflip]*sa
+ *         elif ng==1:
+ */
+      goto __pyx_L9;
+    }
+
+    /* "cutils.pyx":80
+ *         if ng==config.shape[0]:
+ *             pratio-=2*config[iflip]*sa
+ *         elif ng==1:             # <<<<<<<<<<<<<<
+ *             pratio-=2*config[iflip]*a[iflip]
+ *         else:
+ */
+    __pyx_t_20 = ((__pyx_v_ng == 1) != 0);
+    if (__pyx_t_20) {
+
+      /* "cutils.pyx":81
+ *             pratio-=2*config[iflip]*sa
+ *         elif ng==1:
+ *             pratio-=2*config[iflip]*a[iflip]             # <<<<<<<<<<<<<<
+ *         else:
+ *             raise ValueError
+ */
+      __pyx_t_22 = __pyx_v_iflip;
+      __pyx_t_23 = __pyx_v_iflip;
+      __pyx_v_pratio = __Pyx_c_diff(__pyx_v_pratio, __Pyx_c_prod(__pyx_t_double_complex_from_parts((2 * (*__Pyx_BufPtrCContig1d(__pyx_t_6cutils_int_t *, __pyx_pybuffernd_config.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_config.diminfo[0].strides))), 0), (*__Pyx_BufPtrCContig1d(__pyx_t_double_complex *, __pyx_pybuffernd_a.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_a.diminfo[0].strides))));
+
+      /* "cutils.pyx":80
+ *         if ng==config.shape[0]:
+ *             pratio-=2*config[iflip]*sa
+ *         elif ng==1:             # <<<<<<<<<<<<<<
+ *             pratio-=2*config[iflip]*a[iflip]
+ *         else:
+ */
+      goto __pyx_L9;
+    }
+
+    /* "cutils.pyx":83
+ *             pratio-=2*config[iflip]*a[iflip]
+ *         else:
+ *             raise ValueError             # <<<<<<<<<<<<<<
+ *     for i in range(theta.shape[0]):
+ *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
+ */
+    /*else*/ {
+      __Pyx_Raise(__pyx_builtin_ValueError, 0, 0, 0);
+      __PYX_ERR(0, 83, __pyx_L1_error)
+    }
+    __pyx_L9:;
+
+    /* "cutils.pyx":71
+ *     cdef complex_t sa=a.sum()
+ * 
+ *     for iflip in flips:             # <<<<<<<<<<<<<<
+ *         ci=config[iflip]
+ *         for ig1 in range(ng1):
+ */
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "cutils.pyx":84
+ *         else:
+ *             raise ValueError
+ *     for i in range(theta.shape[0]):             # <<<<<<<<<<<<<<
+ *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
+ *     pratio=exp(pratio)
+ */
+  __pyx_t_24 = (__pyx_v_theta->dimensions[0]);
+  for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_24; __pyx_t_10+=1) {
+    __pyx_v_i = __pyx_t_10;
+
+    /* "cutils.pyx":85
+ *             raise ValueError
+ *     for i in range(theta.shape[0]):
+ *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])             # <<<<<<<<<<<<<<
+ *     pratio=exp(pratio)
+ *     return _theta,pratio
+ */
+    __pyx_t_25 = __pyx_v_i;
+    __pyx_t_26 = __pyx_v_i;
+    __pyx_v_pratio = __Pyx_c_sum(__pyx_v_pratio, __Pyx_c_diff(lncoshc((*__Pyx_BufPtrCContig1d(__pyx_t_double_complex *, __pyx_pybuffernd__theta.rcbuffer->pybuffer.buf, __pyx_t_25, __pyx_pybuffernd__theta.diminfo[0].strides))), lncoshc((*__Pyx_BufPtrCContig1d(__pyx_t_double_complex *, __pyx_pybuffernd_theta.rcbuffer->pybuffer.buf, __pyx_t_26, __pyx_pybuffernd_theta.diminfo[0].strides)))));
+  }
+
+  /* "cutils.pyx":86
+ *     for i in range(theta.shape[0]):
+ *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
+ *     pratio=exp(pratio)             # <<<<<<<<<<<<<<
+ *     return _theta,pratio
+ */
+  __pyx_v_pratio = exp(__pyx_v_pratio);
+
+  /* "cutils.pyx":87
+ *         pratio+=lncoshc(_theta[i])-lncoshc(theta[i])
+ *     pratio=exp(pratio)
+ *     return _theta,pratio             # <<<<<<<<<<<<<<
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_3 = __pyx_PyComplex_FromComplex(__pyx_v_pratio); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 87, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_15 = PyTuple_New(2); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 87, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_15);
+  __Pyx_INCREF(((PyObject *)__pyx_v__theta));
+  __Pyx_GIVEREF(((PyObject *)__pyx_v__theta));
+  PyTuple_SET_ITEM(__pyx_t_15, 0, ((PyObject *)__pyx_v__theta));
+  __Pyx_GIVEREF(__pyx_t_3);
+  PyTuple_SET_ITEM(__pyx_t_15, 1, __pyx_t_3);
+  __pyx_t_3 = 0;
+  __pyx_r = __pyx_t_15;
+  __pyx_t_15 = 0;
+  goto __pyx_L0;
+
+  /* "cutils.pyx":55
+ * @cython.boundscheck(False) # turn off bounds-checking for entire function
+ * @cython.wraparound(False)  # turn off negative index wrapping for entire function
+ * def pop2D(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
+ *         np.ndarray[int_t,ndim=1,mode='c'] flips,
+ *         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_15);
+  __Pyx_XDECREF(__pyx_t_16);
+  __Pyx_XDECREF(__pyx_t_17);
+  __Pyx_XDECREF(__pyx_t_18);
+  __Pyx_XDECREF(__pyx_t_19);
+  { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
+    __Pyx_PyThreadState_declare
+    __Pyx_PyThreadState_assign
+    __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_W.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd__theta.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_a.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_config.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_flips.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_ngs.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_theta.rcbuffer->pybuffer);
+  __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
+  __Pyx_AddTraceback("cutils.pop2D", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  goto __pyx_L2;
+  __pyx_L0:;
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_W.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd__theta.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_a.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_config.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_flips.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_ngs.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_theta.rcbuffer->pybuffer);
+  __pyx_L2:;
+  __Pyx_XDECREF((PyObject *)__pyx_v__theta);
+  __Pyx_XDECREF(__pyx_v_iflip1);
+  __Pyx_XDECREF(__pyx_v_iflip2);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
@@ -4097,7 +4944,11 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_home_leo_pycode_rbm_clib_cutils, __pyx_k_home_leo_pycode_rbm_clib_cutils, sizeof(__pyx_k_home_leo_pycode_rbm_clib_cutils), 0, 0, 1, 0},
   {&__pyx_n_s_i, __pyx_k_i, sizeof(__pyx_k_i), 0, 0, 1, 1},
   {&__pyx_n_s_iflip, __pyx_k_iflip, sizeof(__pyx_k_iflip), 0, 0, 1, 1},
+  {&__pyx_n_s_iflip1, __pyx_k_iflip1, sizeof(__pyx_k_iflip1), 0, 0, 1, 1},
+  {&__pyx_n_s_iflip2, __pyx_k_iflip2, sizeof(__pyx_k_iflip2), 0, 0, 1, 1},
   {&__pyx_n_s_ig, __pyx_k_ig, sizeof(__pyx_k_ig), 0, 0, 1, 1},
+  {&__pyx_n_s_ig1, __pyx_k_ig1, sizeof(__pyx_k_ig1), 0, 0, 1, 1},
+  {&__pyx_n_s_ig2, __pyx_k_ig2, sizeof(__pyx_k_ig2), 0, 0, 1, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
   {&__pyx_n_s_lncosh, __pyx_k_lncosh, sizeof(__pyx_k_lncosh), 0, 0, 1, 1},
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
@@ -4105,10 +4956,16 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_u_ndarray_is_not_Fortran_contiguou, __pyx_k_ndarray_is_not_Fortran_contiguou, sizeof(__pyx_k_ndarray_is_not_Fortran_contiguou), 0, 1, 0, 0},
   {&__pyx_n_s_nf, __pyx_k_nf, sizeof(__pyx_k_nf), 0, 0, 1, 1},
   {&__pyx_n_s_ng, __pyx_k_ng, sizeof(__pyx_k_ng), 0, 0, 1, 1},
+  {&__pyx_n_s_ng1, __pyx_k_ng1, sizeof(__pyx_k_ng1), 0, 0, 1, 1},
+  {&__pyx_n_s_ng2, __pyx_k_ng2, sizeof(__pyx_k_ng2), 0, 0, 1, 1},
+  {&__pyx_n_s_ngs, __pyx_k_ngs, sizeof(__pyx_k_ngs), 0, 0, 1, 1},
   {&__pyx_n_s_nv, __pyx_k_nv, sizeof(__pyx_k_nv), 0, 0, 1, 1},
-  {&__pyx_n_s_pop, __pyx_k_pop, sizeof(__pyx_k_pop), 0, 0, 1, 1},
+  {&__pyx_n_s_pop1D, __pyx_k_pop1D, sizeof(__pyx_k_pop1D), 0, 0, 1, 1},
+  {&__pyx_n_s_pop2D, __pyx_k_pop2D, sizeof(__pyx_k_pop2D), 0, 0, 1, 1},
   {&__pyx_n_s_pratio, __pyx_k_pratio, sizeof(__pyx_k_pratio), 0, 0, 1, 1},
   {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
+  {&__pyx_n_s_sa, __pyx_k_sa, sizeof(__pyx_k_sa), 0, 0, 1, 1},
+  {&__pyx_n_s_sum, __pyx_k_sum, sizeof(__pyx_k_sum), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
   {&__pyx_n_s_th, __pyx_k_th, sizeof(__pyx_k_th), 0, 0, 1, 1},
   {&__pyx_n_s_th_2, __pyx_k_th_2, sizeof(__pyx_k_th_2), 0, 0, 1, 1},
@@ -4121,8 +4978,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 39, __pyx_L1_error)
-  __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(1, 218, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 40, __pyx_L1_error)
+  __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(0, 47, __pyx_L1_error)
   __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) __PYX_ERR(1, 799, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
@@ -4214,14 +5071,26 @@ static int __Pyx_InitCachedConstants(void) {
   /* "cutils.pyx":23
  * @cython.boundscheck(False) # turn off bounds-checking for entire function
  * @cython.wraparound(False)  # turn off negative index wrapping for entire function
- * def pop(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
+ * def pop1D(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
  *         np.ndarray[int_t,ndim=1,mode='c'] flips,
  *         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
  */
-  __pyx_tuple__9 = PyTuple_Pack(16, __pyx_n_s_config, __pyx_n_s_flips, __pyx_n_s_W, __pyx_n_s_a, __pyx_n_s_theta, __pyx_n_s_ng, __pyx_n_s_nv, __pyx_n_s_nf, __pyx_n_s_ig, __pyx_n_s_iflip, __pyx_n_s_ci, __pyx_n_s_i, __pyx_n_s_theta_2, __pyx_n_s_pratio, __pyx_n_s_th, __pyx_n_s_th_2); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 23, __pyx_L1_error)
+  __pyx_tuple__9 = PyTuple_Pack(17, __pyx_n_s_config, __pyx_n_s_flips, __pyx_n_s_W, __pyx_n_s_a, __pyx_n_s_theta, __pyx_n_s_ng, __pyx_n_s_nv, __pyx_n_s_nf, __pyx_n_s_ig, __pyx_n_s_iflip, __pyx_n_s_ci, __pyx_n_s_i, __pyx_n_s_theta_2, __pyx_n_s_pratio, __pyx_n_s_th, __pyx_n_s_th_2, __pyx_n_s_sa); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__9);
   __Pyx_GIVEREF(__pyx_tuple__9);
-  __pyx_codeobj__10 = (PyObject*)__Pyx_PyCode_New(6, 0, 16, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__9, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_leo_pycode_rbm_clib_cutils, __pyx_n_s_pop, 23, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__10)) __PYX_ERR(0, 23, __pyx_L1_error)
+  __pyx_codeobj__10 = (PyObject*)__Pyx_PyCode_New(6, 0, 17, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__9, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_leo_pycode_rbm_clib_cutils, __pyx_n_s_pop1D, 23, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__10)) __PYX_ERR(0, 23, __pyx_L1_error)
+
+  /* "cutils.pyx":55
+ * @cython.boundscheck(False) # turn off bounds-checking for entire function
+ * @cython.wraparound(False)  # turn off negative index wrapping for entire function
+ * def pop2D(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
+ *         np.ndarray[int_t,ndim=1,mode='c'] flips,
+ *         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
+ */
+  __pyx_tuple__11 = PyTuple_Pack(24, __pyx_n_s_config, __pyx_n_s_flips, __pyx_n_s_W, __pyx_n_s_a, __pyx_n_s_theta, __pyx_n_s_ngs, __pyx_n_s_nv, __pyx_n_s_nf, __pyx_n_s_ig, __pyx_n_s_iflip, __pyx_n_s_ci, __pyx_n_s_i, __pyx_n_s_ig1, __pyx_n_s_ig2, __pyx_n_s_ng1, __pyx_n_s_ng2, __pyx_n_s_ng, __pyx_n_s_theta_2, __pyx_n_s_pratio, __pyx_n_s_th, __pyx_n_s_th_2, __pyx_n_s_sa, __pyx_n_s_iflip1, __pyx_n_s_iflip2); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 55, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__11);
+  __Pyx_GIVEREF(__pyx_tuple__11);
+  __pyx_codeobj__12 = (PyObject*)__Pyx_PyCode_New(6, 0, 24, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__11, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_leo_pycode_rbm_clib_cutils, __pyx_n_s_pop2D, 55, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__12)) __PYX_ERR(0, 55, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -4367,13 +5236,25 @@ PyMODINIT_FUNC PyInit_cutils(void)
   /* "cutils.pyx":23
  * @cython.boundscheck(False) # turn off bounds-checking for entire function
  * @cython.wraparound(False)  # turn off negative index wrapping for entire function
- * def pop(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
+ * def pop1D(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
  *         np.ndarray[int_t,ndim=1,mode='c'] flips,
  *         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_6cutils_3pop, NULL, __pyx_n_s_cutils); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 23, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_6cutils_3pop1D, NULL, __pyx_n_s_cutils); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pop, __pyx_t_1) < 0) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pop1D, __pyx_t_1) < 0) __PYX_ERR(0, 23, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "cutils.pyx":55
+ * @cython.boundscheck(False) # turn off bounds-checking for entire function
+ * @cython.wraparound(False)  # turn off negative index wrapping for entire function
+ * def pop2D(np.ndarray[int_t,ndim=1,mode='c'] config not None,             # <<<<<<<<<<<<<<
+ *         np.ndarray[int_t,ndim=1,mode='c'] flips,
+ *         np.ndarray[complex_t,ndim=2,mode='c'] W not None,
+ */
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_6cutils_5pop2D, NULL, __pyx_n_s_cutils); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 55, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pop2D, __pyx_t_1) < 0) __PYX_ERR(0, 55, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "cutils.pyx":1
@@ -5545,6 +6426,14 @@ bad:
     return;
 }
 #endif
+
+/* None */
+        static CYTHON_INLINE int __Pyx_div_int(int a, int b) {
+    int q = a / b;
+    int r = a - q*b;
+    q -= ((r != 0) & ((r ^ b) < 0));
+    return q;
+}
 
 /* RaiseTooManyValuesToUnpack */
         static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected) {

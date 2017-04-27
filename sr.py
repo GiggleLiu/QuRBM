@@ -52,7 +52,7 @@ class SR(object):
         if reg_method=='carleo':
             lambda0,b=reg_var.get('lambda0',100),reg_var.get('b',0.9)
             lamb=max(lambda0*b**self._counter,1e-4)
-            fill_diagonal(S,S.diagonal()*(1+lamb))
+            fill_diagonal(S,S.diagonal()*(1+lamb)+1e-8)
             Sinv=inv(S)
         elif reg_method=='delta':
             lambda0=reg_var.get('lambda0',1e-4)

@@ -40,7 +40,7 @@ class SRTest(object):
 
         #vmc config
         cgen=RBMConfigGenerator(initial_config=[-1,1]*(nsite/2)+[1]*(nsite%2),nflip=2 if model=='AFH' else 1)
-        self.vmc=VMC(cgen,nbath=2000,nsample=20000,nmeasure=nsite,sampling_method='metropolis')
+        self.vmc=VMC(cgen,nbath=500*nsite,nsample=5000*nsite,nmeasure=nsite,sampling_method='metropolis')
 
     def test_sr(self,fakevmc=False):
         el=[]
@@ -49,26 +49,68 @@ class SRTest(object):
         #generate a random rbm and the corresponding vector v
         group=(TIGroup(self.nsite if not isinstance(self.h,HeisenbergH2D) else 2*[int(sqrt(self.nsite))])) if self.periodic else NoGroup()
         self.rbm=random_rbm(nin=self.nsite,nhid=self.nsite,group=group)
-        reg_params=('delta',{'lambda0':1e-4})
+        #reg_params=('delta',{'lambda0':1e-4})
         #reg_params=('trunc',{'lambda0':0.2,'eps_trunc':1e-3})
-        #reg_params=('carleo',{'lambda0':100,'b':0.9})
+        reg_params=('carleo',{'lambda0':100,'b':0.9})
         #reg_params=('identity',{})
         #reg_params=('pinv',{})
         sr=SR(self.h,self.rbm,handler=self.vmc if not fakevmc else self.fv,reg_params=reg_params)
-        optimizer=RmsProp(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=2e-3,decay=0.9,momentum=0.5)
+        #optimizer=RmsProp(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=1e-3,decay=0.9,momentum=0.)
         #optimizer=Adam(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=1e-2)
-        #optimizer=GradientDescent(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=5e-2,momentum=0.)
+        optimizer=GradientDescent(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=2e-2,momentum=0.)
+        arr_old=self.rbm.dump_arr()
         for k,info in enumerate(optimizer):
             print 'Running %s-th Iteration.'%k
+            optimizer.step_rate=0.3*0.96**k
             v=self.rbm.tovec(self.scfg); v=v/norm(v)
             ei=sr._opq_vals[1]
             err=abs(e_true[0]-ei)/(abs(e_true[0])+abs(ei))
-            print 'E = %s (%s), Error = %.4f%%'%(ei/self.nsite,e_true[0]/self.nsite,err*100)
+            print 'E/site = %s (%s), Error = %.4f%%'%(ei/self.nsite,e_true[0]/self.nsite,err*100)
             el.append(err)
-        #    if k>50:optimizer.momentum=0.8
-            if k>2000: break
+            #if k>50:optimizer.momentum=0.8
+            arr=self.rbm.dump_arr()
+            print 'diff rate = %s(norm=%s)'%(norm(arr-arr_old)/norm(arr_old),norm(arr_old))
+            arr_old=arr
+            if k>500: break
         savetxt('data/err-%s%s.dat'%(self.nsite,'p' if self.periodic else 'o'),el)
         assert_(err<0.05)
+
+    def test_carleo2D(self):
+        el=[]
+        fname='data/eng-%s-%s%s.dat'%(self.nsite,self.model,'p' if self.periodic else 'o')
+        #generate a random rbm and the corresponding vector v
+        group=(TIGroup(self.nsite if not isinstance(self.h,HeisenbergH2D) else 2*[int(sqrt(self.nsite))])) if self.periodic else NoGroup()
+        #group=(TIGroup(self.nsite if not isinstance(self.h,HeisenbergH2D) else 2*[int(sqrt(self.nsite))])) if False else NoGroup()
+        self.rbm=random_rbm(nin=self.nsite,nhid=self.nsite,group=group)
+        self.rbm.var_mask=[False,True,True]
+
+        #reg_params=('delta',{'lambda0':1e-4})
+        #reg_params=('trunc',{'lambda0':0.1,'eps_trunc':1e-5})
+        reg_params=('carleo',{'lambda0':100,'b':0.9})
+        #reg_params=('identity',{})
+        #reg_params=('pinv',{})
+        sr=SR(self.h,self.rbm,handler=self.vmc,reg_params=reg_params)
+        #optimizer=RmsProp(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=1e-2,decay=0.9,momentum=0.9)
+        #optimizer=Adam(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=1e-2)
+        optimizer=GradientDescent(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=2e-1,momentum=0.5)
+        print 'Running optimizer = %s, regularization = %s, nsite = %s, periodic = %s'%(optimizer,reg_params,self.nsite,self.periodic)
+        self.rbm.a[...]=0
+        arr_old=self.rbm.dump_arr()
+        for k,info in enumerate(optimizer):
+            #if isinstance(optimizer,GradientDescent): optimizer.step_rate=0.2*0.99**k
+            optimizer.step_rate*=0.98
+            print 'Running %s-th Iteration.'%k
+            ei=sr._opq_vals[1]/self.nsite
+            print 'E/site = %s'%ei
+            el.append(ei)
+            if k>50:
+                print 'setting momentum!'
+                optimizer.momentum=0.9
+            if k>500: break
+            arr=self.rbm.dump_arr()
+            print 'diff rate = %s(norm=%s)'%(norm(arr-arr_old)/norm(arr_old),norm(arr_old))
+            arr_old=arr
+        savetxt(fname,el)
 
 def show_err_sr(nsite):
     from matplotlib.pyplot import plot,ion
@@ -92,6 +134,7 @@ def show_err_sr(nsite):
     savefig('data/err-%s.pdf'%nsite)
 
 if __name__=='__main__':
-    t=SRTest(nsite=4,periodic=True,model='AFH2D')
-    t.test_sr(fakevmc=False)
+    t=SRTest(nsite=100,periodic=True,model='AFH2D')
+    #t.test_sr(fakevmc=False)
+    t.test_carleo2D()
     #show_err_sr(nsite=4)

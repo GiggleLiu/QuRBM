@@ -1,13 +1,12 @@
 '''Random Boltzmann Machine Kernel for Monte Carlo.'''
 
 from numpy import *
-from profilehooks import profile
 from scipy.linalg import norm
 from abc import ABCMeta, abstractmethod
 import pdb,time
 
 from utils import logcosh
-from clib.cutils import pop
+from clib.cutils import pop1D,pop2D
 
 __all__=['RBMConfigGenerator','ConfigGenerator']
 
@@ -106,23 +105,28 @@ class RBMConfigGenerator(ConfigGenerator):
             tuple, (new configuration, new theta table, <c'|Psi>/<c|Psi>).
         '''
         rbm=self.state
-        return pop(config=self.config,flips=asarray(flips),W=rbm.W,a=rbm.a,theta=self.theta,ng=rbm.group.ng)
+        if rbm.group.ng==1 or len(rbm.group.ngs)==1:
+            return pop1D(config=self.config,flips=asarray(flips),W=rbm.W,a=rbm.a,theta=self.theta,ng=rbm.group.ng)
+        else:
+            return pop2D(config=self.config,flips=asarray(flips),W=rbm.W,a=rbm.a,theta=self.theta,ngs=rbm.group.ngs)
 
         _theta=copy(self.theta)
         nj=rbm.W.shape[1]
         nsite=rbm.nin
+        flips=asarray(flips)
 
         t0=time.time()
         #update new theta table
+        cflip=self.config[flips]
         for ig in xrange(rbm.group.ng):
             for iflip in flips:
-                _theta[ig*nj:(ig+1)*nj]-=2*self.config[iflip]*rbm.W[rbm.group.ind_apply(iflip,-ig)%nsite]  #-ig is corrent!
+                _theta[ig*nj:(ig+1)*nj]-=2*cflip*rbm.W[rbm.group.ind_apply(iflip,-ig)%nsite]  #-ig is corrent!
         t1=time.time()
 
-        pratio=exp(2*(-self.config[flips]*rbm.a[flips]).sum()+sum(logcosh(_theta)-logcosh(self.theta)))
+        pratio_=exp(2*sum([-cflip*rbm.a[rbm.group.ind_apply(flips,-ig)%nsite] for ig in xrange(rbm.group.ng)],axis=0).sum()+sum(logcosh(_theta)-logcosh(self.theta)))
+        print abs(_theta-_theta).sum()
         #nc=copy(self.config); nc[flips]*=-1
         #pratio_=rbm.get_weight(nc)/rbm.get_weight(asarray(self.config))
-        #print pratio/pratio_
         return _theta,pratio
 
     def fire(self):

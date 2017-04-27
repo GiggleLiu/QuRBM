@@ -25,8 +25,9 @@ class RBM(object):
 
         :nin,nhid: int, number of input and hidden layer, (nin,nh) = shape(W)
     '''
-    def __init__(self,a,b,W,group=NoGroup()):
+    def __init__(self,a,b,W,group=NoGroup(),var_mask=[True,True,True]):
         self.a,self.b,self.W,self.group=asarray(a),asarray(b),asarray(W),group
+        self.var_mask=var_mask
         if not len(self.a)*len(self.b)==prod(self.W.shape):raise ValueError()
 
     def __rmul__(self,target):
@@ -115,19 +116,25 @@ class RBM(object):
         '''
         group=self.group
         if theta is None: theta=self.feed_input(config)
-        return exp(asarray(config).dot(self.a))*prod(2*cosh(theta),axis=-1)
+        return exp(sum([group.apply(asarray(config),ig).dot(self.a) for ig in xrange(group.ng)],axis=0))*prod(2*cosh(theta),axis=-1)
 
     def dump_arr(self):
         '''Dump values to an array.'''
-        return concatenate([self.a,self.b,self.W.ravel()])
+        return concatenate([x for i,x in enumerate([self.a,self.b,self.W.ravel()]) if self.var_mask[i]])
 
     def load_arr(self,v):
         '''Load data from an array.'''
         nb=self.nhid/self.group.ng
         nin=self.nin
-        self.a[...]=v[:nin]
-        self.b[...]=v[nin:nin+nb]
-        self.W[...]=v[nin+nb:].reshape([nin,nb])
+        offset=0
+        if self.var_mask[0]:
+            self.a[...]=v[offset:nin]
+            offset+=nin
+        if self.var_mask[1]:
+            self.b[...]=v[offset:offset+nb]
+            offset+=nb
+        if self.var_mask[2]:
+            self.W[...]=v[offset:].reshape([nin,nb])
 
 def random_rbm(nin,nhid,group=NoGroup()):
     '''Get a random Restricted Boltzmann Machine'''
@@ -135,7 +142,7 @@ def random_rbm(nin,nhid,group=NoGroup()):
     nb=nhid/group.ng
     #data=(random.random(nin+nhid+nin*nhid/group.ng)-0.5)/2**nhid+1j*random.random(nin+nhid+nin*nhid/group.ng)-0.5j
     data=(random.random(nin+nb+nin*nb)-0.5)+1j*random.random(nin+nb+nin*nb)-0.5j
-    data/=1000.
+    data*=0.1
     a=data[:nin]
     b=data[nin:nin+nb]
     W=data[nin+nb:].reshape([nin,nb])
