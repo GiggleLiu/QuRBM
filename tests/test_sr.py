@@ -136,7 +136,7 @@ def show_err_sr(nsite):
     savefig('data/err-%s.pdf'%nsite)
 
 if __name__=='__main__':
-    t=SRTest(nsite=100,periodic=True,model='AFH2D')
-    #t.test_sr(fakevmc=False)
-    t.test_carleo2D()
+    t=SRTest(nsite=4,periodic=True,model='AFH2D')
+    t.test_sr(fakevmc=False)
+    #t.test_carleo2D()
     #show_err_sr(nsite=4)

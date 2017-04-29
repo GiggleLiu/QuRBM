@@ -66,6 +66,12 @@ class NoGroup(RBMGroup):
     def apply_all(self,config):
         return array([config])
 
+    def unfold_W(self,W):
+        return W
+
+    def unfold_a(self,a):
+        return a
+
     @property
     def ng(self):
         return 1
@@ -107,20 +113,37 @@ class TIGroup(RBMGroup):
             config=roll(config,igi,axis=cdim-gdim+i)
         return config.reshape(config.shape[:-gdim]+(-1,))
 
-    def _iterate_apply(self,config,iaxis):
+    def _iterate_apply_config(self,config,iaxis):
         gdim=len(self.ngs)
         cdim=ndim(config)
         raxis=cdim-gdim+iaxis
         if iaxis==gdim-1:
             return array([roll(config,ig,axis=raxis).reshape(config.shape[:-gdim]+(-1,)) for ig in xrange(self.ngs[iaxis])])
         else:
-            return concatenate([self._iterate_apply(roll(config,ig,axis=raxis),iaxis+1) for ig in xrange(self.ngs[iaxis])],axis=0)
+            return concatenate([self._iterate_apply_config(roll(config,ig,axis=raxis),iaxis+1) for ig in xrange(self.ngs[iaxis])],axis=0)
+
+    def _iterate_apply_W(self,W,iaxis):
+        gdim=len(self.ngs)
+        if iaxis==gdim-1:
+            return concatenate([roll(W,-ig,axis=iaxis).reshape([-1,W.shape[-1]]) for ig in xrange(self.ngs[iaxis])],axis=-1)
+        else:
+            return concatenate([self._iterate_apply_W(roll(W,-ig,axis=iaxis),iaxis+1) for ig in xrange(self.ngs[iaxis])],axis=-1)
 
     def apply_all(self,config):
         if len(self.ngs)>1:
             config=config.reshape(config.shape[:-1]+tuple(self.ngs))
-        return self._iterate_apply(config,0)
+        return self._iterate_apply_config(config,0)
 
     def ind_apply(self,ind,ig):
         res=self._pack_ind((self._expand_ind(ind)-self._expand_ind(ig))%self.ngs)
         return res
+
+    def unfold_W(self,W):
+        '''Unfold W'''
+        if len(self.ngs)>1:
+            W=W.reshape(tuple(self.ngs)+(W.shape[-1],))
+        return self._iterate_apply_W(W,0)
+
+    def unfold_a(self,a):
+        a=a.reshape(tuple(self.ngs)+(1,))
+        return self._iterate_apply_W(a,0).sum(axis=-1)

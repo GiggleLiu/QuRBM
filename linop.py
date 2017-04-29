@@ -40,6 +40,7 @@ class PartialW(LinOp):
             #get partial Wij
             config_g=state.group.apply_all(config)
             partialS.append(sum(config_g[:,:,newaxis]*tanh(theta).reshape([state.group.ng,1,state.W.shape[1]]),axis=0).ravel())
+            #partialS.append(sum(config_g[:,:,newaxis]*tanh(theta).reshape([state.group.ng,1,state.W.shape[1]]),axis=0).ravel())
         #partialS.append((config[:,newaxis]*tanh(theta)).ravel())
         return concatenate(partialS)
 

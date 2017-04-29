@@ -13,12 +13,12 @@ def load_carleo_wf(filename,group=None):
     nh=int(fl[1].strip('\n'))
     datas=array([fromstring(s.strip('()\n'),sep=',') for s in fl[2:]])
     datas=datas[:,0]+1j*datas[:,1]
-    a=datas[:nv]
+    a=datas[:nv]/group.ng
     b=datas[nv:nv+nh]
     W=datas[nv+nh:].reshape(nv,nh)
     if group is not None or group.ng==1:
-        b=b[:nh/group.ng]
-        W=ascontiguousarray(W[:,:nh/group.ng])
+        b=b[::group.ng]
+        W=ascontiguousarray(W[:,::group.ng])
     return a,b,W
 
 def logcosh(theta):

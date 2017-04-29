@@ -40,7 +40,7 @@ class SRTest(object):
         #vmc config
         c0=[-1,1]*(nsite/2); random.shuffle(c0)
         cgen=RBMConfigGenerator(initial_config=c0,nflip=2 if model=='AFH' else 1)#repeat([-1,1],(nsite/2)))
-        self.vmc=VMC(cgen,nbath=200*nsite,nsample=2000*nsite,nmeasure=nsite,sampling_method='metropolis')
+        self.vmc=VMC(cgen,nbath=500*nsite,nsample=5000*nsite,nmeasure=nsite,sampling_method='metropolis')
 
     def test_sample_carleo(self):
         from utils import load_carleo_wf
@@ -60,12 +60,12 @@ class SRTest(object):
     def test_sample_carleo2D(self):
         from utils import load_carleo_wf
         nsite=100
-        #group=TIGroup([10,10])
-        group=NoGroup()
-        rbm=RBM(*load_carleo_wf('test2d.wf',group=group),group=group)
+        t0=time.time()
+        group=TIGroup([10,10])
+        #group=NoGroup()
+        rbm=RBM(*load_carleo_wf('test2d2.wf',group=group),group=group)
         #order=arange(rbm.nin); random.shuffle(order)
         #rbm.W=roll(rbm.W.reshape([10,10,100]),3,axis=1).reshape([100,100])
-        pdb.set_trace()
         nsite=rbm.nin
         h=HeisenbergH2D(10,10,J=-4.,Jz=4.,periodic=True)
         c0=[-1,1]*(nsite/2); random.shuffle(c0)
@@ -73,8 +73,9 @@ class SRTest(object):
         vmc=VMC(cgen,nbath=100*nsite,nsample=1000*nsite,nmeasure=nsite,sampling_method='metropolis')
 
         E=vmc.measure(h,rbm)
-        print 'E/site = %s'%(E/nsite)
-        assert_(abs(E/nsite+2.666)<2e-3)
+        t1=time.time()
+        print 'E/site = %s, Elapse %s'%(E/nsite,t1-t0)
+        assert_(abs(E/nsite+2.67)<1e-2)
 
     def test_carleo(self):
         el=[]

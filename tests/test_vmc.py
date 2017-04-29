@@ -52,7 +52,7 @@ class VMCTest(object):
 
     def test_measureh(self):
         print 'VMC measurements on HeisenbergH.'
-        for rbm in [self.rbm_g,self.rbm]:
+        for rbm in [self.rbm,self.rbm_g]:
             #measurements
             O_true=self.fv.measure(self.h,rbm)/self.nsite
             O_vmc=self.vmc.measure(self.h,rbm)/self.nsite

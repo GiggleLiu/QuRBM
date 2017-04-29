@@ -59,6 +59,18 @@ class RBM(object):
     @property
     def nin(self): return len(self.a)
 
+    def get_W_nogroup(self):
+        '''Get the group expanded W.'''
+        return self.group.unfold_W(self.W)
+
+    def get_b_nogroup(self):
+        '''Get the group expanded b.'''
+        return concatenate([self.b]*self.group.ng)
+
+    def get_a_nogroup(self):
+        '''Get the group expanded a.'''
+        return self.group.unfold_a(self.a)
+
     def feed_input(self,v):
         '''
         Feed visible inputs, and get output in hidden layers.

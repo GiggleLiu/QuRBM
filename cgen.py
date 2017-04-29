@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 import pdb,time
 
 from utils import logcosh
-from clib.cutils import pop1D,pop2D
+from clib.cutils import pop1D,pop2D,pop_nogroup
 
 __all__=['RBMConfigGenerator','ConfigGenerator']
 
@@ -76,8 +76,10 @@ class RBMConfigGenerator(ConfigGenerator):
     def __init__(self,nflip,initial_config=None):
         self.nflip=nflip
         self.state=None
-        self.theta=None
-        self._theta=None
+        self.theta=None       #\sigma*W+b
+        self._W_nogroup=None  #no group version of W
+        self._a_nogroup=None  #no group version a
+        self._theta=None      #the update candidate of theta
         if hasattr(initial_config,'__iter__'):
             initial_config=asarray(initial_config)
         self.config=initial_config
@@ -87,6 +89,8 @@ class RBMConfigGenerator(ConfigGenerator):
         if self.config is None:
             self.config=self.random_config()
         self.theta=state.feed_input(self.config)   # bug fix note: remember these two lines are needed!
+        self._W_nogroup=state.get_W_nogroup()
+        self._a_nogroup=state.get_a_nogroup()
         self._theta=None
 
     def random_config(self):
@@ -105,6 +109,8 @@ class RBMConfigGenerator(ConfigGenerator):
             tuple, (new configuration, new theta table, <c'|Psi>/<c|Psi>).
         '''
         rbm=self.state
+        return pop_nogroup(config=self.config,flips=asarray(flips),W=self._W_nogroup,a=self._a_nogroup,theta=self.theta)
+
         if rbm.group.ng==1 or len(rbm.group.ngs)==1:
             return pop1D(config=self.config,flips=asarray(flips),W=rbm.W,a=rbm.a,theta=self.theta,ng=rbm.group.ng)
         else:
