@@ -2,6 +2,8 @@ from numpy import *
 from abc import ABCMeta, abstractmethod
 import pdb
 
+from utils import logfh_prime
+
 __all__=['LinOp','PartialW','c_sandwich','OpQueue']
 
 class LinOp(object):
@@ -30,18 +32,16 @@ class PartialW(LinOp):
         theta=cgen.theta
         state=cgen.state
         partialS=[]
+        config_g=state.group.apply_all(config)
         if state.var_mask[0]:
             #get partial ai
-            partialS.append(sum(state.group.apply_all(config),axis=0))
+            partialS.append(sum(config_g,axis=0))
         if state.var_mask[1]:
             #get partial bj
-            partialS.append(tanh(theta).reshape([state.group.ng,len(state.b)]).sum(axis=0))
+            partialS.append(logfh_prime(theta).reshape([state.group.ng,len(state.b)]).sum(axis=0))
         if state.var_mask[2]:
             #get partial Wij
-            config_g=state.group.apply_all(config)
-            partialS.append(sum(config_g[:,:,newaxis]*tanh(theta).reshape([state.group.ng,1,state.W.shape[1]]),axis=0).ravel())
-            #partialS.append(sum(config_g[:,:,newaxis]*tanh(theta).reshape([state.group.ng,1,state.W.shape[1]]),axis=0).ravel())
-        #partialS.append((config[:,newaxis]*tanh(theta)).ravel())
+            partialS.append(sum(config_g[:,:,newaxis]*logfh_prime(theta).reshape([state.group.ng,1,state.W.shape[1]]),axis=0).ravel())
         return concatenate(partialS)
 
 class OpQueue(LinOp):

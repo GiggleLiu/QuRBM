@@ -16,7 +16,6 @@ from sr import *
 from cgen import *
 from vmc import *
 from group import TIGroup,NoGroup
-from optimizer import *
 
 from test_vmc import analyse_sampling
 
@@ -39,14 +38,14 @@ class SRTest(object):
 
         #vmc config
         c0=[-1,1]*(nsite/2); random.shuffle(c0)
-        cgen=RBMConfigGenerator(initial_config=c0,nflip=2 if model=='AFH' else 1)#repeat([-1,1],(nsite/2)))
+        cgen=RBMConfigGenerator(initial_config=c0,nflip=2 if model[:3]=='AFH' else 1)#repeat([-1,1],(nsite/2)))
         self.vmc=VMC(cgen,nbath=500*nsite,nsample=5000*nsite,nmeasure=nsite,sampling_method='metropolis')
 
     def test_sample_carleo(self):
         from utils import load_carleo_wf
         nsite=40
         group=TIGroup([nsite])
-        rbm=RBM(*load_carleo_wf('test.wf',group=group),group=group)
+        rbm=RBM(*load_carleo_wf('test.wf',group=group),group=group,array_order='F')
         nsite=rbm.nin
         h=HeisenbergH(nsite=nsite,J=-4.,Jz=4.,periodic=True)
         c0=[-1,1]*(nsite/2); random.shuffle(c0)
@@ -63,14 +62,14 @@ class SRTest(object):
         t0=time.time()
         group=TIGroup([10,10])
         #group=NoGroup()
-        rbm=RBM(*load_carleo_wf('test2d2.wf',group=group),group=group)
+        rbm=RBM(*load_carleo_wf('test2d.wf',group=group),group=group,array_order='C')
         #order=arange(rbm.nin); random.shuffle(order)
         #rbm.W=roll(rbm.W.reshape([10,10,100]),3,axis=1).reshape([100,100])
         nsite=rbm.nin
         h=HeisenbergH2D(10,10,J=-4.,Jz=4.,periodic=True)
         c0=[-1,1]*(nsite/2); random.shuffle(c0)
         cgen=RBMConfigGenerator(initial_config=c0,nflip=2)
-        vmc=VMC(cgen,nbath=100*nsite,nsample=1000*nsite,nmeasure=nsite,sampling_method='metropolis')
+        vmc=VMC(cgen,nbath=500*nsite,nsample=5000*nsite,nmeasure=nsite,sampling_method='metropolis')
 
         E=vmc.measure(h,rbm)
         t1=time.time()
@@ -114,7 +113,7 @@ def show_err_sr(nsite):
     savefig('data/err-%s.pdf'%nsite)
 
 if __name__=='__main__':
-    t=SRTest(nsite=16,periodic=False,model='AFH')
+    t=SRTest(nsite=16,periodic=False,model='AFH2D')
     #t.test_sample_carleo()
     t.test_sample_carleo2D()
     #t.test_carleo()

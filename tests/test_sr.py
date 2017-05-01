@@ -55,15 +55,16 @@ class SRTest(object):
         #reg_params=('identity',{})
         #reg_params=('pinv',{})
         sr=SR(self.h,self.rbm,handler=self.vmc if not fakevmc else self.fv,reg_params=reg_params)
-        #optimizer=RmsProp(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=1e-3,decay=0.9,momentum=0.)
+        #sr=SD(self.h,self.rbm,handler=self.vmc if not fakevmc else self.fv)
+        optimizer=RmsProp(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=1e-3,decay=0.9,momentum=0.)
         #optimizer=Adam(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=1e-2)
-        optimizer=GradientDescent(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=2e-2,momentum=0.)
+        #optimizer=GradientDescent(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=1e-2,momentum=0.)
         arr_old=self.rbm.dump_arr()
         self.rbm.a[...]=0
         for k,info in enumerate(optimizer):
             self.rbm.a[...]=0
             print 'Running %s-th Iteration.'%k
-            optimizer.step_rate=0.3*0.96**k
+            #optimizer.step_rate=0.3*0.96**k
             v=self.rbm.tovec(self.scfg); v=v/norm(v)
             ei=sr._opq_vals[1]
             err=abs(e_true[0]-ei)/(abs(e_true[0])+abs(ei))
@@ -93,20 +94,20 @@ class SRTest(object):
         sr=SR(self.h,self.rbm,handler=self.vmc,reg_params=reg_params)
         #optimizer=RmsProp(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=1e-2,decay=0.9,momentum=0.9)
         #optimizer=Adam(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=1e-2)
-        optimizer=GradientDescent(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=2e-1,momentum=0.5)
+        optimizer=GradientDescent(wrt=self.rbm.dump_arr(),fprime=sr.compute_gradient,step_rate=1e-2,momentum=0.5)
         print 'Running optimizer = %s, regularization = %s, nsite = %s, periodic = %s'%(optimizer,reg_params,self.nsite,self.periodic)
         self.rbm.a[...]=0
         arr_old=self.rbm.dump_arr()
         for k,info in enumerate(optimizer):
             #if isinstance(optimizer,GradientDescent): optimizer.step_rate=0.2*0.99**k
-            optimizer.step_rate*=0.98
+            #optimizer.step_rate*=0.98
             print 'Running %s-th Iteration.'%k
             ei=sr._opq_vals[1]/self.nsite
             print 'E/site = %s'%ei
             el.append(ei)
-            if k>50:
-                print 'setting momentum!'
-                optimizer.momentum=0.9
+            #if k>50:
+                #print 'setting momentum!'
+                #optimizer.momentum=0.9
             if k>500: break
             arr=self.rbm.dump_arr()
             print 'diff rate = %s(norm=%s)'%(norm(arr-arr_old)/norm(arr_old),norm(arr_old))

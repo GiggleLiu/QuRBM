@@ -5,8 +5,9 @@ from scipy.linalg import norm
 from abc import ABCMeta, abstractmethod
 import pdb,time
 
-from utils import logcosh
+from utils import logfh
 from clib.cutils import pop1D,pop2D,pop_nogroup
+from clib.futils import fpop_nogroup
 
 __all__=['RBMConfigGenerator','ConfigGenerator']
 
@@ -77,7 +78,7 @@ class RBMConfigGenerator(ConfigGenerator):
         self.nflip=nflip
         self.state=None
         self.theta=None       #\sigma*W+b
-        self._W_nogroup=None  #no group version of W
+        self._WT_nogroup=None  #no group version of W
         self._a_nogroup=None  #no group version a
         self._theta=None      #the update candidate of theta
         if hasattr(initial_config,'__iter__'):
@@ -89,7 +90,7 @@ class RBMConfigGenerator(ConfigGenerator):
         if self.config is None:
             self.config=self.random_config()
         self.theta=state.feed_input(self.config)   # bug fix note: remember these two lines are needed!
-        self._W_nogroup=state.get_W_nogroup()
+        self._WT_nogroup=asfortranarray(state.get_W_nogroup().T)
         self._a_nogroup=state.get_a_nogroup()
         self._theta=None
 
@@ -109,12 +110,13 @@ class RBMConfigGenerator(ConfigGenerator):
             tuple, (new configuration, new theta table, <c'|Psi>/<c|Psi>).
         '''
         rbm=self.state
-        return pop_nogroup(config=self.config,flips=asarray(flips),W=self._W_nogroup,a=self._a_nogroup,theta=self.theta)
+        return fpop_nogroup(config=self.config,flips=asfortranarray(flips),wt=self._WT_nogroup,a=self._a_nogroup,theta=self.theta,fh_id=0)
+        #return pop_nogroup(config=self.config,flips=asarray(flips),W=self._WT_nogroup,a=self._a_nogroup,theta=self.theta)
 
-        if rbm.group.ng==1 or len(rbm.group.ngs)==1:
-            return pop1D(config=self.config,flips=asarray(flips),W=rbm.W,a=rbm.a,theta=self.theta,ng=rbm.group.ng)
-        else:
-            return pop2D(config=self.config,flips=asarray(flips),W=rbm.W,a=rbm.a,theta=self.theta,ngs=rbm.group.ngs)
+        #if rbm.group.ng==1 or len(rbm.group.ngs)==1:
+        #    return pop1D(config=self.config,flips=asarray(flips),W=rbm.W,a=rbm.a,theta=self.theta,ng=rbm.group.ng)
+        #else:
+        #    return pop2D(config=self.config,flips=asarray(flips),W=rbm.W,a=rbm.a,theta=self.theta,ngs=rbm.group.ngs)
 
         _theta=copy(self.theta)
         nj=rbm.W.shape[1]
@@ -129,7 +131,7 @@ class RBMConfigGenerator(ConfigGenerator):
                 _theta[ig*nj:(ig+1)*nj]-=2*cflip[i]*rbm.W[rbm.group.ind_apply(iflip,-ig)%nsite]  #-ig is corrent!
         t1=time.time()
 
-        pratio=exp(2*sum([-cflip*rbm.a[rbm.group.ind_apply(flips,-ig)%nsite] for ig in xrange(rbm.group.ng)],axis=0).sum()+sum(logcosh(_theta)-logcosh(self.theta)))
+        pratio=exp(2*sum([-cflip*rbm.a[rbm.group.ind_apply(flips,-ig)%nsite] for ig in xrange(rbm.group.ng)],axis=0).sum()+sum(logfh(_theta)-logfh(self.theta)))
         nc=copy(self.config); nc[flips]*=-1
         _theta_true=rbm.feed_input(nc)
         pratio_true=rbm.get_weight(nc)/rbm.get_weight(asarray(self.config))

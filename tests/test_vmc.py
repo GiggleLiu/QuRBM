@@ -45,7 +45,7 @@ class VMCTest(object):
 
         #vmc config
         cgen=RBMConfigGenerator(nflip=2,initial_config=array([-1,1]*2))
-        self.vmc=VMC(cgen,nbath=500*self.nsite,nsample=5000*self.nsite,nmeasure=self.nsite,sampling_method='metropolis')
+        self.vmc=VMC(cgen,nbath=5000*self.nsite,nsample=50000*self.nsite,nmeasure=self.nsite,sampling_method='metropolis')
 
         #fake vmc
         self.fv=FakeVMC(self.h)
@@ -90,12 +90,12 @@ class VMCTest(object):
 
             for O_true,O_vmc in zip(O_trues,O_vmcs):
                 err=abs(O_vmc-O_true).mean()
-                print 'Error = %.4f%%'%(err*100)
+                print 'Error = %.4f/%s'%(err,abs(O_true).mean())
                 #assert_(err<0.1)
 
 if __name__=='__main__':
     t=VMCTest(model='AFH2D')
-    t.test_measureh()
-    pdb.set_trace()
     t.test_measureq()
+    pdb.set_trace()
+    t.test_measureh()
     t.test_measurepw()

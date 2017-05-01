@@ -4,19 +4,17 @@ Restricted Boltzmann Machine.
 
 from numpy import *
 import numbers,pdb
+from scipy.special import expit
 
 from sstate import SparseState
 from group import NoGroup
+from utils import fh
 
 __all__=['RBM','random_rbm']
 
 class RBM(object):
     '''
     Restricted Boltzmann Machine class.
-
-        S = [[x b b b],   #what is x here?
-             [a W W W],
-             [a W W W]]
 
     Attributes:
         :a,b: 1darray, the bias
@@ -25,9 +23,16 @@ class RBM(object):
 
         :nin,nhid: int, number of input and hidden layer, (nin,nh) = shape(W)
     '''
-    def __init__(self,a,b,W,group=NoGroup(),var_mask=[True,True,True]):
-        self.a,self.b,self.W,self.group=asarray(a),asarray(b),asarray(W),group
+    def __init__(self,a,b,W,group=NoGroup(),var_mask=[True,True,True],input_node_type='linear',hidden_node_type='linear',array_order='A'):
+        if array_order=='C':
+            self.a,self.b,self.W=ascontiguousarray(a),ascontiguousarray(b),ascontiguousarray(W)
+        elif array_order=='F':
+            self.a,self.b,self.W=asfortranarray(a),asfortranarray(b),asfortranarray(W)
+        else:
+            self.a,self.b,self.W=asarray(a),asarray(b),asarray(W)
+        self.group=group
         self.var_mask=var_mask
+        self.input_node_type,self.hidden_node_type=input_node_type,hidden_node_type
         if not len(self.a)*len(self.b)==prod(self.W.shape):raise ValueError()
 
     def __rmul__(self,target):
@@ -59,6 +64,10 @@ class RBM(object):
     @property
     def nin(self): return len(self.a)
 
+    @property
+    def weight_dtype(self):
+        return self.W.dtype
+
     def get_W_nogroup(self):
         '''Get the group expanded W.'''
         return self.group.unfold_W(self.W)
@@ -81,13 +90,11 @@ class RBM(object):
         Return:
             1darray, raw output in hidden nodes.
         '''
-        nj=self.W.shape[1]
-        hl=[]
-        vl=self.group.apply_all(v)
-        for vi in vl:
-            hi=vi.dot(self.W)+self.b
-            hl.append(hi)
-        return concatenate(hl,axis=-1)
+        res=v.dot(self.get_W_nogroup())+self.get_b_nogroup()
+        if self.hidden_node_type=='binary':
+            return expit(res)
+        else:
+            return res
 
     def feed_hidden(self,h):
         '''
@@ -99,13 +106,14 @@ class RBM(object):
         Return:
             1darray, raw output in input nodes.
         '''
-        vl=[]
-        nj=self.W.shape[1]
-        for ig in xrange(self.group.ng):
-            hi=h[...,ig*nj:nj*(ig+1)]
-            vi=self.group.apply(self.W.dot(hi)+self.a,-ig)
-            vl.append(vi)
-        return sum(vl,axis=0)
+        if h.ndim>1:
+            res=self.get_W_nogroup().dot(h.T).T+self.get_a_nogroup()
+        else:
+            res=self.get_W_nogroup().dot(h)+self.get_a_nogroup()
+        if self.input_node_type=='binary':
+            return expit(res)
+        else:
+            return res
 
     def tovec(self,spaceconfig):  #poor designed interface.
         '''
@@ -128,7 +136,7 @@ class RBM(object):
         '''
         group=self.group
         if theta is None: theta=self.feed_input(config)
-        return exp(sum([group.apply(asarray(config),ig).dot(self.a) for ig in xrange(group.ng)],axis=0))*prod(2*cosh(theta),axis=-1)
+        return exp(sum([group.apply(asarray(config),ig).dot(self.a) for ig in xrange(group.ng)],axis=0))*prod(fh(theta),axis=-1)
 
     def dump_arr(self):
         '''Dump values to an array.'''
@@ -148,14 +156,19 @@ class RBM(object):
         if self.var_mask[2]:
             self.W[...]=v[offset:].reshape([nin,nb])
 
-def random_rbm(nin,nhid,group=NoGroup()):
+def random_rbm(nin,nhid,group=NoGroup(),dtype='complex128',**kwargs):
     '''Get a random Restricted Boltzmann Machine'''
     if nhid%group.ng!=0: raise ValueError()
     nb=nhid/group.ng
     #data=(random.random(nin+nhid+nin*nhid/group.ng)-0.5)/2**nhid+1j*random.random(nin+nhid+nin*nhid/group.ng)-0.5j
-    data=(random.random(nin+nb+nin*nb)-0.5)+1j*random.random(nin+nb+nin*nb)-0.5j
-    data*=0.1
+    if dtype=='complex128':
+        data=(random.random(nin+nb+nin*nb)-0.5)+1j*random.random(nin+nb+nin*nb)-0.5j
+        data*=1e-2/abs(data)
+    elif dtype=='float64':
+        data=(random.random(nin+nb+nin*nb)-0.5)*0.01
+    else:
+        raise ValueError('unsupported dtype %s'%dtype)
     a=data[:nin]
     b=data[nin:nin+nb]
     W=data[nin+nb:].reshape([nin,nb])
-    return RBM(a,b,W,group=group)
+    return RBM(a,b,W,group=group,**kwargs)

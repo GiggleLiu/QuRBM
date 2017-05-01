@@ -8,7 +8,7 @@ import pdb
 
 from tba.hgen import SpinSpaceConfig,sx,sy,sz
 from linop import *
-from sstate import SparseState
+from utils import logfh_prime
 
 __all__=['TFI','HeisenbergH','FakeVMC','HeisenbergH2D']
 
@@ -231,9 +231,9 @@ class FakeVMC(object):
             pS=[]
             pS.append(configs)
             theta=state.feed_input(configs)
-            pS.append(tanh(theta).reshape([len(configs),state.group.ng,len(state.b)]).sum(axis=1))
+            pS.append(logfh_prime(theta).reshape([len(configs),state.group.ng,len(state.b)]).sum(axis=1))
             configs_g=state.group.apply_all(configs).swapaxes(0,1)
-            pS.append(sum(configs_g[:,:,:,newaxis]*tanh(theta).reshape([scfg.hndim,state.group.ng,1,state.W.shape[1]]),axis=1).reshape([configs.shape[0],-1]))
+            pS.append(sum(configs_g[:,:,:,newaxis]*logfh_prime(theta).reshape([scfg.hndim,state.group.ng,1,state.W.shape[1]]),axis=1).reshape([configs.shape[0],-1]))
             pS=concatenate(pS,axis=-1)
             return sum((v.conj()*v)[:,newaxis]*pS,axis=0)
         elif isinstance(op,OpQueue):
@@ -245,9 +245,9 @@ class FakeVMC(object):
             pS=[]
             pS.append(configs)
             theta=state.feed_input(configs)
-            pS.append(tanh(theta).reshape([len(configs),state.group.ng,len(state.b)]).sum(axis=1))
+            pS.append(logfh_prime(theta).reshape([len(configs),state.group.ng,len(state.b)]).sum(axis=1))
             configs_g=state.group.apply_all(configs).swapaxes(0,1)
-            pS.append(sum(configs_g[:,:,:,newaxis]*tanh(theta).reshape([scfg.hndim,state.group.ng,1,state.W.shape[1]]),axis=1).reshape([configs.shape[0],-1]))
+            pS.append(sum(configs_g[:,:,:,newaxis]*logfh_prime(theta).reshape([scfg.hndim,state.group.ng,1,state.W.shape[1]]),axis=1).reshape([configs.shape[0],-1]))
             pS=concatenate(pS,axis=-1)
             OPW=sum((v.conj()*v)[:,newaxis]*pS,axis=0)
 

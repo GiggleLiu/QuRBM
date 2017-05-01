@@ -7,7 +7,6 @@ from scipy.linalg import pinv,inv,norm,eigh
 import pdb
 
 from linop import PartialW,OpQueue
-from optimizer import DefaultOpt
 
 __all__=['SR','SD']
 
@@ -33,7 +32,7 @@ class SR(object):
         self.rbm=rbm
         self.handler=handler
         self.reg_params=reg_params
-        self._opq=OpQueue((PartialW(),H),(lambda a,b:a[...,newaxis].conj()*a,lambda a,b:a.conj()*b))
+        self._opq=OpQueue((PartialW(),H),(lambda a,b:a[:,newaxis].conj()*a,lambda a,b:a.conj()*b))
         self._opq_vals=None
         self._counter=0
 
@@ -74,7 +73,7 @@ class SR(object):
         self._counter+=1
         return Sinv.dot(F)
 
-def SD(H,rbm,handler,niter=200,optimizer=DefaultOpt(0.03)):
+class SD(object):
     '''
     Steepest descend.
 
@@ -82,22 +81,23 @@ def SD(H,rbm,handler,niter=200,optimizer=DefaultOpt(0.03)):
         :H: LinOp, Hamiltonian.
         :rbm: <RBM>, the state.
         :handler: <VMC>/..., the object with @measure(op) method.
-        :niter: int, number of iteration.
-        :optimizer: <Optimizer>/func, optimization engine.
     '''
-    q=OpQueue((PartialW(),H),(lambda a,b:a.conj()*b,))
-    nb=rbm.nhid/rbm.group.ng
-    info={}
-    info['opl']=[]
-    for p in xrange(niter):
-        print '#'*20+' ITERATION %s '%p+'#'*20
-        ops=handler.measure(q,rbm,tol=0); info['opl'].append(ops)
-        OPW,OH,OPWH=ops; OH=OH.real
-        F=OPWH-OPW.conj()*OH
+    def __init__(self,H,rbm,handler):
+        self.H=H
+        self.rbm=rbm
+        self.handler=handler
+        self._opq=OpQueue((PartialW(),H),(lambda a,b:a.conj()*b,))
+        self._opq_vals=None
+        self._counter=0
 
-        ds=optimizer(OH,F,p)  #decide the move according to the gradient
-        rbm.a+=ds[:rbm.nin]
-        rbm.b+=ds[rbm.nin:rbm.nin+nb]
-        rbm.W+=ds[rbm.nin+nb:].reshape(rbm.W.shape)
-        print 'Energy/site = %s'%(OH/rbm.nin)
-    return rbm,info
+    def compute_gradient(self,v):
+        handler,rbm,q=self.handler,self.rbm,self._opq
+        #update RBM
+        rbm.load_arr(v)
+
+        #perform measurements
+        self._opq_vals=handler.measure(q,rbm,tol=0)
+        OPW,OH,OPWH=self._opq_vals; OH=OH.real
+        F=OPWH-OPW.conj()*OH
+        self._counter+=1
+        return F

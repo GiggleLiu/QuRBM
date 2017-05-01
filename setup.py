@@ -1,11 +1,12 @@
-#from numpy.distutils.extension import Extension
-#from Cython.Distutils import build_ext
-
+'''
+Set up file for matrix product state.
+'''
 from numpy.distutils.command import build_src
 import Cython
 import Cython.Compiler.Main
 build_src.Pyrex = Cython
 build_src.have_pyrex = True
+
 import os
 os.environ["CC"] = "g++"
 os.environ["CXX"] = "g++"
@@ -61,15 +62,16 @@ build_src.build_src.generate_a_pyrex_source = generate_a_pyrex_source
 # END additionnal code #
 ########################
 
+
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,get_numpy_include_dirs
-    config=Configuration('clib',parent_package,top_path)
-    config.add_extension('cutils',
-            ['cutils.pyx'],
-            depends=['cutils.cpp'],
-            libraries=[],include_dirs=[get_numpy_include_dirs(),os.curdir])
+    config=Configuration('rbm',parent_package,top_path)
+    #config.add_subpackage('clib')
+    config.add_extension('clib.cutils',['clib/cutils.pyx'],
+            depends=['clib/cutils.cpp'],
+            libraries=[],include_dirs=[get_numpy_include_dirs(),os.curdir,'clib'])
     return config
 
-if __name__=='__main__':
+if __name__ == '__main__':
     from numpy.distutils.core import setup
     setup(configuration=configuration)
